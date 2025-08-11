@@ -53,6 +53,18 @@ const MOCK_FLIGHTS = [
     totalSeats: 186,
     availableSeats: 76,
     baseFare: 2900,
+  },
+  {
+    flightId: 4,
+    flightNumber: "SG813",
+    airlineName: "SpiceJet",
+    fromAirport: "DEL",
+    toAirport: "BOM",
+    departureTime: "2023-08-11T14:15:00",
+    arrivalTime: "2023-08-11T18:30:00",
+    totalSeats: 180,
+    availableSeats: 73,
+    baseFare: 2950,
   }
 ];
 
