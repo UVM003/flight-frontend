@@ -176,30 +176,30 @@ const BookingPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="mb-4">
-                  <FormLabel>Number of Tickets</FormLabel>
-                  <Select 
-                    value={numberOfTickets.toString()}
-                    onValueChange={(value) => setNumberOfTickets(Number(value))}
-                  >
-                    <SelectTrigger className="w-full md:w-40">
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[1, 2, 3, 4, 5].map((num) => (
-                        <SelectItem 
-                          key={num} 
-                          value={num.toString()}
-                          disabled={num > flight.availableSeats}
-                        >
-                          {num} {num === 1 ? 'Passenger' : 'Passengers'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    {flight.availableSeats} seats available on this flight
-                  </FormDescription>
-                </div>
+  <label className="block text-sm font-medium mb-1">Number of Tickets</label>
+  <Select 
+    value={numberOfTickets.toString()}
+    onValueChange={(value) => setNumberOfTickets(Number(value))}
+  >
+    <SelectTrigger className="w-full md:w-40">
+      <SelectValue placeholder="Select" />
+    </SelectTrigger>
+    <SelectContent>
+      {[1, 2, 3, 4, 5].map((num) => (
+        <SelectItem 
+          key={num} 
+          value={num.toString()}
+          disabled={num > flight.availableSeats}
+        >
+          {num} {num === 1 ? 'Passenger' : 'Passengers'}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+  <p className="text-sm text-muted-foreground mt-1">
+    {flight.availableSeats} seats available on this flight
+  </p>
+</div>
                 
                 {/* Added Passengers List */}
                 {passengers.length > 0 && (

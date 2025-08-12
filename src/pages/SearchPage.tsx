@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { CalendarIcon, Loader2, Plane, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +13,33 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Checkbox } from "@/components/ui/checkbox";
+
+const airports = [
+  { code: "BLR", name: "Bengaluru: Kempegowda International Airport" },
+  { code: "DEL", name: "Delhi: Indira Gandhi International Airport" },
+  { code: "BOM", name: "Mumbai: Chhatrapati Shivaji Maharaj International Airport" },
+  { code: "MAA", name: "Chennai: Chennai International Airport" },
+  { code: "CCU", name: "Kolkata: Netaji Subhas Chandra Bose International Airport" },
+  { code: "HYD", name: "Hyderabad: Rajiv Gandhi International Airport" },
+  { code: "AMD", name: "Ahmedabad: Sardar Vallabhbhai Patel International Airport" },
+  { code: "COK", name: "Kochi: Cochin International Airport" },
+  { code: "GOI", name: "Goa: Dabolim Airport" },
+  { code: "JAI", name: "Jaipur: Jaipur International Airport" },
+  { code: "PNQ", name: "Pune: Pune International Airport" },
+  { code: "LKO", name: "Lucknow: Chaudhary Charan Singh International Airport" },
+  { code: "NAG", name: "Nagpur: Dr. Babasaheb Ambedkar International Airport" },
+  { code: "VTZ", name: "Visakhapatnam: Visakhapatnam International Airport" },
+  { code: "TIR", name: "Tirupati: Tirupati Airport" },
+  { code: "VGA", name: "Vijayawada: Vijayawada Airport" },
+  { code: "IXE", name: "Mangalore: Mangalore International Airport" },
+  { code: "TRV", name: "Thiruvananthapuram: Trivandrum International Airport" },
+  { code: "CCJ", name: "Calicut: Calicut International Airport" },
+  { code: "CNN", name: "Kannur: Kannur International Airport" },
+  { code: "CJB", name: "Coimbatore: Coimbatore International Airport" },
+  { code: "TRZ", name: "Tiruchirappalli: Tiruchirappalli International Airport" },
+  { code: "IXM", name: "Madurai: Madurai International Airport" },
+  { code: "BBI", name: "Bhubaneswar: Biju Patnaik International Airport" },
+];
 
 const SearchPage = () => {
   const navigate = useNavigate();
@@ -26,24 +52,26 @@ const SearchPage = () => {
     departureDate: format(new Date(), 'yyyy-MM-dd'),
   });
 
-  // Advanced filters
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
   const [fareRange, setFareRange] = useState([0, 10000]);
   const [minSeats, setMinSeats] = useState('');
 
-  // Airlines list
   const airlines = ['IndiGo', 'Air India', 'Vistara', 'SpiceJet', 'Go First'];
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 5;
 
-  // Popover control
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const fetchFlights = async (page: number) => {
     if (!searchParams.fromAirport || !searchParams.toAirport) {
       alert("Please enter both From and To airports");
+      return;
+    }
+
+    // *** Frontend validation for same airports ***
+    if (searchParams.fromAirport === searchParams.toAirport) {
+      alert("Departure and destination airports cannot be the same. Please select different airports.");
       return;
     }
 
@@ -67,24 +95,28 @@ const SearchPage = () => {
       const response = await fetch(
         `http://localhost:8086/api/filter/flights/search/advanced?${params}`
       );
-      if (!response.ok) throw new Error("Failed to fetch flights");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch flights");
+      }
       const data = await response.json();
       setFlights(data);
       setCurrentPage(page);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching flights:", error);
       setFlights([]);
+      alert(error.message || "Error fetching flights");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSearch = () => {
-    setFiltersOpen(false); // Close filters
-    fetchFlights(0); // reset to first page
+    setFiltersOpen(false);
+    fetchFlights(0);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setSearchParams((prev) => ({ ...prev, [name]: value }));
   };
@@ -100,6 +132,10 @@ const SearchPage = () => {
   };
 
   const handleViewFlight = (flightId: number) => {
+    if (!flightId) {
+      alert("Flight ID is undefined!");
+      return;
+    }
     navigate(`/flights/${flightId}`);
   };
 
@@ -136,30 +172,51 @@ const SearchPage = () => {
       <Card className="mb-8">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            {/* From Airport dropdown */}
             <div className="space-y-2">
               <Label htmlFor="fromAirport">From</Label>
-              <Input
+              <select
                 id="fromAirport"
                 name="fromAirport"
-                placeholder="Departure City or Airport"
                 value={searchParams.fromAirport}
                 onChange={handleInputChange}
-              />
+                className="w-full border rounded px-2 py-1"
+              >
+                <option value="" disabled>
+                  Select Departure Airport
+                </option>
+                {airports.map((airport) => (
+                  <option key={airport.code} value={airport.code}>
+                    {airport.name} ({airport.code})
+                  </option>
+                ))}
+              </select>
             </div>
 
+            {/* To Airport dropdown */}
             <div className="space-y-2">
               <Label htmlFor="toAirport">To</Label>
-              <Input
+              <select
                 id="toAirport"
                 name="toAirport"
-                placeholder="Destination City or Airport"
                 value={searchParams.toAirport}
                 onChange={handleInputChange}
-              />
+                className="w-full border rounded px-2 py-1"
+              >
+                <option value="" disabled>
+                  Select Destination Airport
+                </option>
+                {airports.map((airport) => (
+                  <option key={airport.code} value={airport.code}>
+                    {airport.name} ({airport.code})
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">
               <Label>Departure Date</Label>
+              {/* ... same calendar popover as before ... */}
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -179,6 +236,11 @@ const SearchPage = () => {
                     selected={date}
                     onSelect={handleDateChange}
                     initialFocus
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return date < today;
+                    }}
                   />
                 </PopoverContent>
               </Popover>
@@ -252,10 +314,12 @@ const SearchPage = () => {
 
                   <div>
                     <Label>Minimum Seats</Label>
-                    <Input
+                    <input
                       type="number"
                       value={minSeats}
                       onChange={(e) => setMinSeats(e.target.value)}
+                      className="w-full border rounded px-2 py-1"
+                      min={0}
                     />
                   </div>
 
@@ -269,7 +333,7 @@ const SearchPage = () => {
         </CardContent>
       </Card>
 
-      {/* Results with smooth transition */}
+      {/* Results */}
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold">
           {isLoading
@@ -341,7 +405,6 @@ const SearchPage = () => {
           ))}
         </AnimatePresence>
 
-        {/* Pagination Controls */}
         {flights.length > 0 && (
           <div className="flex justify-between mt-6">
             <Button
