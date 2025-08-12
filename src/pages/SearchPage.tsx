@@ -39,7 +39,7 @@ const airports = [
   { code: "TRZ", name: "Tiruchirappalli: Tiruchirappalli International Airport" },
   { code: "IXM", name: "Madurai: Madurai International Airport" },
   { code: "BBI", name: "Bhubaneswar: Biju Patnaik International Airport" },
-
+]
 // Mock data for demo purposes
 const MOCK_FLIGHTS = [
   {
