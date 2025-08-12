@@ -39,6 +39,45 @@ const airports = [
   { code: "TRZ", name: "Tiruchirappalli: Tiruchirappalli International Airport" },
   { code: "IXM", name: "Madurai: Madurai International Airport" },
   { code: "BBI", name: "Bhubaneswar: Biju Patnaik International Airport" },
+]
+// Mock data for demo purposes
+const MOCK_FLIGHTS = [
+  {
+    flightId: 4,
+    flightNumber: "AI101",
+    airlineName: "Air India",
+    fromAirport: "DEL",
+    toAirport: "BOM",
+    departureTime: "2023-08-10T08:00:00",
+    arrivalTime: "2023-08-10T10:00:00",
+    totalSeats: 180,
+    availableSeats: 45,
+    baseFare: 3500,
+  },
+  {
+    flightId: 2,
+    flightNumber: "UK203",
+    airlineName: "Vistara",
+    fromAirport: "DEL",
+    toAirport: "BOM",
+    departureTime: "2023-08-10T12:30:00",
+    arrivalTime: "2023-08-10T14:45:00",
+    totalSeats: 150,
+    availableSeats: 22,
+    baseFare: 4200,
+  },
+  {
+    flightId: 3,
+    flightNumber: "SG812",
+    airlineName: "SpiceJet",
+    fromAirport: "DEL",
+    toAirport: "BOM",
+    departureTime: "2023-08-10T16:15:00",
+    arrivalTime: "2023-08-10T18:30:00",
+    totalSeats: 186,
+    availableSeats: 76,
+    baseFare: 2900,
+  }
 ];
 
 const SearchPage = () => {

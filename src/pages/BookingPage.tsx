@@ -79,7 +79,6 @@ const BookingPage = () => {
   const [passengers, setPassengers] = useState<PassengerInfo[]>([]);
   const [flight] = useState(MOCK_FLIGHT); // In a real app, fetch this data
   const [numberOfTickets, setNumberOfTickets] = useState(1);
-  
   const passengerForm = useForm<PassengerFormValues>({
     resolver: zodResolver(passengerSchema),
     defaultValues: {
@@ -242,7 +241,7 @@ setTimeout(() => {
                       Add Passenger {passengers.length + 1} of {numberOfTickets}
                     </h3>
                     
-                    <Form {...passengerForm}>
+                  <Form {...passengerForm}>
                       <form onSubmit={passengerForm.handleSubmit(onAddPassenger)} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <FormField
@@ -379,7 +378,7 @@ setTimeout(() => {
                             : "Add Passenger"}
                         </Button>
                       </form>
-                    </Form>
+                    </Form> 
                   </div>
                 )}
               </CardContent>

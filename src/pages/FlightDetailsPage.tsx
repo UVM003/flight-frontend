@@ -5,11 +5,23 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Plane, Clock, Calendar, Users, AlertCircle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
-//import { AuthService } from '@/lib/api';
+import { useAppSelector } from "../store/store";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import api from '@/lib/axiosApi';
+
 
 // Mock data for demonstration
 const MOCK_FLIGHT = {
-  flightId: 1,
+  flightId: 6,
   flightNumber: "AI101",
   airlineName: "Air India",
   fromAirport: "DEL",
@@ -28,8 +40,10 @@ const FlightDetailsPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [flight, setFlight] = useState(MOCK_FLIGHT);
-  const isAuthenticated = true;
-  //const isAuthenticated = AuthService.isAuthenticated();
+  const [open, setOpen] = useState(false);
+   const [loading, setLoading] = useState(false);
+    const { customer, isAuthenticated } = useAppSelector((state) => state.auth);
+
 
   useEffect(() => {
     // In a real app, fetch flight details from API
@@ -40,17 +54,41 @@ const FlightDetailsPage = () => {
     }, 1000);
   }, [flightId]);
 
-  // const handleBookNow = () => {
-  //   if (!isAuthenticated) {
-  //     navigate('/login', { state: { redirectTo: `/flights/${flightId}` } });
-  //   } else {
-  //     navigate(`/booking/${flightId}`);
-  //   }
-  // };
   const handleBookNow = () => {
-  navigate(`/booking/${flightId}`);
+    if (!isAuthenticated) {
+      navigate('/login', { state: { redirectTo: `/flights/${flightId}` } });
+    } else {
+      navigate(`/booking/${flightId}`);
+    }
+  };
+//   const handleBookNow = () => {
+//   navigate(`/booking/${flightId}`);
+// };
+  const handleUpdateFlight = () => {
+  navigate(`/update/${flightId}`);
 };
-
+  const handleCancelFlight = () => {
+  navigate(`/cancel/${flightId}`);
+};
+  const handleConfirm = () => {
+    // Simulate a REST call with a 2 second delay.
+    setLoading(true);
+    api.delete(`/api/flights/${parseInt(flightId)}`)
+     .then((response) => {
+       toast.success("Flight deleted successfully!", {
+         duration: 1500, // 2 seconds
+       });
+        console.log("deleted flight details:", response.data);
+     })
+     .catch((error) => {
+       console.error("Error deleting flight:", error);
+       toast.error("Failed to delete flight.", {
+         duration: 1500,
+       });
+     });
+      setLoading(false);
+      setOpen(false);
+  };
 
   // Calculate flight duration
   const calculateDuration = () => {
@@ -189,16 +227,64 @@ const FlightDetailsPage = () => {
           <div className="text-xl font-bold">
             Price: ₹{flight.baseFare}
           </div>
-          <Button 
-            size="lg" 
-            onClick={handleBookNow}
-            disabled={flight.availableSeats === 0}
-          >
-            Book Now
-          </Button>
+          {!customer || customer.role !== "ADMIN" ? (
+  <Button
+    size="lg"
+    onClick={handleBookNow}
+    disabled={flight.availableSeats === 0}
+  >
+    Book Now
+  </Button>
+) : null}
+           { customer?.role === "ADMIN" && (
+            <div className='md:flex md:gap-2'>
+            <Button
+              size="lg"
+              onClick={handleUpdateFlight}
+              disabled={flight.availableSeats === 0}
+            >
+              Update Details
+          </Button> 
+           <Button
+              size="lg"
+              className='mt-2 md:mt-0 bg-red-700 hover:bg-red-600'
+              onClick={() => setOpen(true)}
+              disabled={flight.availableSeats === 0}
+            >
+              Delete Flight
+          </Button></div>)}
         </CardFooter>
       </Card>
-      
+    {/* Dialog tab for confirmation of delete flight   */}
+ <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete flight <b>{flightId}</b>? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={loading}
+            >
+              No
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirm}
+              disabled={loading}
+            >
+              {loading ? "Deleting..." : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       {/* Fare details */}
       <Card className="mb-8">
         <CardContent className="pt-6">
