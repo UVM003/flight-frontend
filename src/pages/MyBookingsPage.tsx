@@ -261,8 +261,19 @@ const MyBookingsPage = () => {
                     </Button>
                     <div className="space-x-2">
                       {selectedBooking.bookingStatus === "CONFIRMED" && (
-                        <Button variant="destructive">Cancel Booking</Button>
-                      )}
+                      <Button 
+                        variant="destructive" 
+                        onClick={() => navigate(`/ticket-cancel/${selectedBooking.bookingId}`, {
+                          state: {
+                            fromAirport: selectedBooking.fromAirport,
+                            toAirport: selectedBooking.toAirport,
+                            bookingDate: selectedBooking.bookingDate,
+                          },
+                        })}
+                      >
+                        Cancel Booking
+                      </Button>
+                    )}
                       <Button className="bg-blue-600 hover:bg-blue-700">Download E-Ticket</Button>
                     </div>
                   </CardFooter>

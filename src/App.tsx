@@ -14,6 +14,7 @@ import BookingPage from './pages/BookingPage';
 import BookingSuccessPage from './pages/BookingSuccessPage';
 import MyBookingsPage from './pages/MyBookingsPage';
 import NotFound from './pages/NotFound';
+import TicketCancellationPage from './pages/TicketCancellationPage.tsx';
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/booking/:flightId" element={<BookingPage />} />
               <Route path="/booking-success" element={<BookingSuccessPage />} />
               <Route path="/bookings" element={<MyBookingsPage />} />
+              <Route path="/ticket-cancel/:bookingId" element={<TicketCancellationPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
