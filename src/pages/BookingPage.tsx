@@ -105,7 +105,7 @@ const BookingPage = () => {
   
   // Function to add a passenger
   const onAddPassenger = (data: PassengerFormValues) => {
-  setPassengers([...passengers, data as PassengerInfo]);  // <-- add `as PassengerInfo` type assertion
+  setPassengers([...passengers, data as PassengerInfo]);  // <-- add as PassengerInfo type assertion
   passengerForm.reset();
 
   if (passengers.length + 1 >= numberOfTickets) {
@@ -117,24 +117,24 @@ const BookingPage = () => {
   const onPaymentSubmit = (data: PaymentFormValues) => {
     setIsLoading(true);
     
-    // In a real app, make API call to create booking
-    setTimeout(() => {
-      const bookingData = {
-        flightId: Number(flightId),
-        noOfTickets: passengers.length,
-        totalFare: calculateTotalFare(),
-        passengers,
-        paymentId: `PAY-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      };
-      
-      console.log('Booking data:', bookingData);
+   // In a real app, make API call to create booking
+setTimeout(() => {
+  const bookingData = {
+    flightId: Number(flightId),
+    noOfTickets: passengers.length,
+    totalFare: calculateTotalFare(),
+    passengers,
+    paymentId: `PAY-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+  };
+
+  console.log('Booking data:', bookingData);
       
       // Navigate to success page with booking details
-      navigate('/booking-success', {
-        state: {
-          bookingId: `BK${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-          flightNumber: flight.flightNumber,
-        }
+    navigate('/booking-success', {
+     state: {
+    bookingId: `BK${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+    flightNumber: flight.flightNumber,
+  }
       });
       
       setIsLoading(false);
@@ -176,30 +176,30 @@ const BookingPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="mb-4">
-                  <FormLabel>Number of Tickets</FormLabel>
-                  <Select 
-                    value={numberOfTickets.toString()}
-                    onValueChange={(value) => setNumberOfTickets(Number(value))}
-                  >
-                    <SelectTrigger className="w-full md:w-40">
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[1, 2, 3, 4, 5].map((num) => (
-                        <SelectItem 
-                          key={num} 
-                          value={num.toString()}
-                          disabled={num > flight.availableSeats}
-                        >
-                          {num} {num === 1 ? 'Passenger' : 'Passengers'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    {flight.availableSeats} seats available on this flight
-                  </FormDescription>
-                </div>
+  <label className="block text-sm font-medium mb-1">Number of Tickets</label>
+  <Select 
+    value={numberOfTickets.toString()}
+    onValueChange={(value) => setNumberOfTickets(Number(value))}
+  >
+    <SelectTrigger className="w-full md:w-40">
+      <SelectValue placeholder="Select" />
+    </SelectTrigger>
+    <SelectContent>
+      {[1, 2, 3, 4, 5].map((num) => (
+        <SelectItem 
+          key={num} 
+          value={num.toString()}
+          disabled={num > flight.availableSeats}
+        >
+          {num} {num === 1 ? 'Passenger' : 'Passengers'}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+  <p className="text-sm text-muted-foreground mt-1">
+    {flight.availableSeats} seats available on this flight
+  </p>
+</div>
                 
                 {/* Added Passengers List */}
                 {passengers.length > 0 && (

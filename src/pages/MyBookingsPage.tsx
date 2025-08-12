@@ -20,8 +20,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Calendar, Clock, ArrowRight, Search } from 'lucide-react';
 import { format } from 'date-fns';
-// import { AuthService } from '@/lib/api';  // If not using auth, comment this out
-// import { Ticket } from '@/types.ts'; // Make sure this type is defined or comment
 
 // Mock bookings data (replace or remove if fetching from API)
 const MOCK_BOOKINGS = [
@@ -83,25 +81,15 @@ const MOCK_BOOKINGS = [
 const MyBookingsPage = () => {
   const navigate = useNavigate();
 
-  // Declare state for bookings and selected booking
   const [isLoading, setIsLoading] = useState(true);
   const [bookings, setBookings] = useState(MOCK_BOOKINGS);
-  const [selectedBooking, setSelectedBooking] = useState(null); // <-- Here!
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   useEffect(() => {
-    // If you want to skip auth, just load bookings directly:
     setTimeout(() => {
       setBookings(MOCK_BOOKINGS);
       setIsLoading(false);
     }, 1000);
-
-    // If you want to add auth later:
-    /*
-    if (!AuthService.isAuthenticated()) {
-      navigate('/login', { state: { redirectTo: '/bookings' } });
-      return;
-    }
-    */
   }, [navigate]);
 
   const handleViewDetails = (booking) => {
@@ -109,17 +97,17 @@ const MyBookingsPage = () => {
   };
 
   const getStatusColor = (status: string) => {
-  switch (status.toUpperCase()) {
-    case 'CONFIRMED':
-      return 'default';  // changed from 'success' to 'default'
-    case 'PENDING':
-      return 'outline';  // changed from 'warning' to 'outline' (or 'secondary')
-    case 'CANCELLED':
-      return 'destructive';
-    default:
-      return 'secondary';
-  }
-};
+    switch (status.toUpperCase()) {
+      case 'CONFIRMED':
+        return 'default';
+      case 'PENDING':
+        return 'outline';
+      case 'CANCELLED':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
+  };
 
   if (isLoading) {
     return (
@@ -152,7 +140,7 @@ const MyBookingsPage = () => {
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className={`lg:col-span-${selectedBooking ? 1 : 3}`}>
+          <div className={selectedBooking ? "lg:col-span-1" : "lg:col-span-3"}>
             <Card>
               <CardHeader>
                 <CardTitle>Your Bookings</CardTitle>
