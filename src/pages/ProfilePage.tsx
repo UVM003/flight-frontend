@@ -64,13 +64,6 @@ const ProfilePage = () => {
   const [error, setError] = useState<string | null>(null);
   const dispatch = useDispatch();
   useEffect(() => {
-    // Check if user is authenticated
-   /* if (!AuthService.isAuthenticated()) {
-      navigate('/login', { state: { redirectTo: '/profile' } });
-      return;
-    }*/
-    
-    // In a real app, fetch profile from API
     setTimeout(() => {
       setCustomer(MOCK_CUSTOMER);
       setIsLoading(false);
@@ -96,7 +89,6 @@ const ProfilePage = () => {
   });
   
   useEffect(() => {
-    // Populate the form when customer data is loaded
     if (!isLoading) {
       profileForm.reset({
         firstName: customer.firstName,
@@ -111,7 +103,6 @@ const ProfilePage = () => {
     setError(null);
     setUpdateSuccess(false);
     
-    // In a real app, make API call to update profile
     setTimeout(() => {
       setCustomer({
         ...customer,
@@ -119,8 +110,6 @@ const ProfilePage = () => {
       });
       setUpdateSuccess(true);
       setIsLoading(false);
-      
-      // Reset success message after 3 seconds
       setTimeout(() => setUpdateSuccess(false), 3000);
     }, 1000);
   };
@@ -130,14 +119,10 @@ const ProfilePage = () => {
     setError(null);
     setPasswordSuccess(false);
     
-    // In a real app, make API call to change password
     setTimeout(() => {
-      // Simulate success
       setPasswordSuccess(true);
       setIsLoading(false);
       passwordForm.reset();
-      
-      // Reset success message after 3 seconds
       setTimeout(() => setPasswordSuccess(false), 3000);
     }, 1000);
   };
@@ -171,223 +156,235 @@ const handleLogout = () => {
   }
 
   return (
-    <div className="container py-8 max-w-3xl">
-      <h1 className="text-3xl font-bold mb-2">My Profile</h1>
-      <p className="text-muted-foreground mb-6">
-        Manage your account details and password
-      </p>
-      
-      <Tabs defaultValue="profile">
-        <TabsList className="mb-6">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="password">Password</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>
-                Update your personal details
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {updateSuccess && (
-                <Alert className="mb-6" variant="default">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <AlertTitle>Success</AlertTitle>
-                  <AlertDescription>Your profile has been updated successfully.</AlertDescription>
-                </Alert>
-              )}
-              
-              {error && (
-                <Alert variant="destructive" className="mb-6">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              
-              <Form {...profileForm}>
-                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={profileForm.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>First Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} disabled={isLoading} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={profileForm.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Last Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} disabled={isLoading} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+    <div
+      className="min-h-screen bg-cover bg-center"
+      style={{
+        backgroundImage: "url('/ocean.jpeg')",
+      }}
+    >
+      {/* Overlay */}
+      <div className="bg-black bg-opacity-50 min-h-screen">
+        <div className="container py-8 max-w-3xl text-white">
+          <h1 className="text-3xl font-bold mb-2">My Profile</h1>
+          <p className="mb-6 text-gray-200">
+            Manage your account details and password
+          </p>
+          
+          <Tabs defaultValue="profile">
+            <TabsList className="mb-6">
+              <TabsTrigger value="profile">Profile</TabsTrigger>
+              <TabsTrigger value="password">Password</TabsTrigger>
+            </TabsList>
+            
+            {/* Profile Tab */}
+            <TabsContent value="profile">
+              <Card className="bg-white bg-opacity-80">
+                <CardHeader>
+                  <CardTitle>Profile Information</CardTitle>
+                  <CardDescription>
+                    Update your personal details
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {updateSuccess && (
+                    <Alert className="mb-6" variant="default">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <AlertTitle>Success</AlertTitle>
+                      <AlertDescription>Your profile has been updated successfully.</AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  {error && (
+                    <Alert variant="destructive" className="mb-6">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  <Form {...profileForm}>
+                    <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={profileForm.control}
+                          name="firstName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>First Name</FormLabel>
+                              <FormControl>
+                                <Input {...field} disabled={isLoading} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={profileForm.control}
+                          name="lastName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Last Name</FormLabel>
+                              <FormControl>
+                                <Input {...field} disabled={isLoading} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={profileForm.control}
+                        name="phoneNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl>
+                              <Input {...field} disabled={isLoading} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="pt-2">
+                        <Button 
+                          type="submit" 
+                          disabled={isLoading || !profileForm.formState.isDirty}
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Saving...
+                            </>
+                          ) : "Save Changes"}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                  
+                  <div className="mt-8 pt-8 border-t">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-medium">Account</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Log out from your account
+                        </p>
+                      </div>
+                      <Button variant="destructive" onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Logout
+                      </Button>
+                    </div>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* Password Tab */}
+            <TabsContent value="password">
+              <Card className="bg-white bg-opacity-80">
+                <CardHeader>
+                  <CardTitle>Change Password</CardTitle>
+                  <CardDescription>
+                    Update your account password
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {passwordSuccess && (
+                    <Alert className="mb-6" variant="default">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <AlertTitle>Success</AlertTitle>
+                      <AlertDescription>Your password has been changed successfully.</AlertDescription>
+                    </Alert>
+                  )}
                   
-                  <FormField
-                    control={profileForm.control}
-                    name="phoneNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} disabled={isLoading} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {error && (
+                    <Alert variant="destructive" className="mb-6">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
                   
-                  <div className="pt-2">
-                    <Button 
-                      type="submit" 
-                      disabled={isLoading || !profileForm.formState.isDirty}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : "Save Changes"}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-              
-              <div className="mt-8 pt-8 border-t">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-medium">Account</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Log out from your account
-                    </p>
-                  </div>
-                  <Button variant="destructive" onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="password">
-          <Card>
-            <CardHeader>
-              <CardTitle>Change Password</CardTitle>
-              <CardDescription>
-                Update your account password
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {passwordSuccess && (
-                <Alert className="mb-6" variant="default">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <AlertTitle>Success</AlertTitle>
-                  <AlertDescription>Your password has been changed successfully.</AlertDescription>
-                </Alert>
-              )}
-              
-              {error && (
-                <Alert variant="destructive" className="mb-6">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              
-              <Form {...passwordForm}>
-                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-                  <FormField
-                    control={passwordForm.control}
-                    name="currentPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Current Password</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="password" 
-                            {...field} 
-                            disabled={isLoading}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={passwordForm.control}
-                    name="newPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>New Password</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="password" 
-                            {...field}
-                            disabled={isLoading}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={passwordForm.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="password" 
-                            {...field}
-                            disabled={isLoading}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="pt-2">
-                    <Button 
-                      type="submit" 
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Changing Password...
-                        </>
-                      ) : "Change Password"}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  <Form {...passwordForm}>
+                    <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                      <FormField
+                        control={passwordForm.control}
+                        name="currentPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Current Password</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="password" 
+                                {...field} 
+                                disabled={isLoading}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={passwordForm.control}
+                        name="newPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>New Password</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="password" 
+                                {...field}
+                                disabled={isLoading}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={passwordForm.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Confirm New Password</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="password" 
+                                {...field}
+                                disabled={isLoading}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="pt-2">
+                        <Button 
+                          type="submit" 
+                          disabled={isLoading}
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Changing Password...
+                            </>
+                          ) : "Change Password"}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
     </div>
   );
 };

@@ -78,104 +78,109 @@ const onSubmit = async (data: LoginFormValues) => {
   }
 };
   return (
-    <div className="container max-w-lg py-10">
-      <Card className="shadow-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Log in</CardTitle>
-          <CardDescription>
-            Enter your email and password to access your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {error && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="email@example.com" 
-                        {...field} 
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="******" 
-                        {...field}
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="text-right">
-                <Link 
-                  to="/forgot-password" 
-                  className="text-sm text-primary hover:underline"
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center"
+      style={{ backgroundImage: "url('/night.jpg')" }}
+    >
+      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-xl shadow-lg w-full max-w-lg">
+        <Card className="shadow-md border-none">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold">Log in</CardTitle>
+            <CardDescription>
+              Enter your email and password to access your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {error && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="email@example.com" 
+                          {...field} 
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="******" 
+                          {...field}
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="text-right">
+                  <Link 
+                    to="/forgot-password" 
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={isLoading}
                 >
-                  Forgot password?
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Logging in...
+                    </>
+                  ) : "Log in"}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+          <CardFooter>
+            <div className="text-center w-full">
+              <p className="text-sm text-muted-foreground">
+                Don't have an account?{" "}
+                <Link 
+                  to="/register" 
+                  className="text-primary hover:underline"
+                >
+                  Sign up
                 </Link>
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Logging in...
-                  </>
-                ) : "Log in"}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-        <CardFooter>
-          <div className="text-center w-full">
-            <p className="text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <Link 
-                to="/register" 
-                className="text-primary hover:underline"
-              >
-                Sign up
-              </Link>
-            </p>
+              </p>
+            </div>
+          </CardFooter>
+        </Card>
+        
+        {/* Demo credentials hint */}
+        <div className="mt-6 p-4 border rounded-md bg-muted/40">
+          <h3 className="font-medium mb-2">Demo Credentials</h3>
+          <div className="space-y-1 text-sm">
+            <p><strong>Admin User:</strong> admin@example.com / admin123</p>
+            <p><strong>Regular User:</strong> user@example.com / user123</p>
           </div>
-        </CardFooter>
-      </Card>
-      
-      {/* Demo credentials hint */}
-      {/* <div className="mt-6 p-4 border rounded-md bg-muted/40">
-        <h3 className="font-medium mb-2">Demo Credentials</h3>
-        <div className="space-y-1 text-sm">
-          <p><strong>Admin User:</strong> admin@example.com / admin123</p>
-          <p><strong>Regular User:</strong> user@example.com / user123</p>
         </div>
       </div> */}
     </div>
