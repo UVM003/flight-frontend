@@ -184,7 +184,7 @@ const SearchPage = () => {
               </Popover>
             </div>
 
-            {/* Search & Filters */}
+            {/* Search & Filters simply*/}
             <div className="md:col-span-3 flex gap-2">
               <Button
                 className="w-full md:w-auto"
