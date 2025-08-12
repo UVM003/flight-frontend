@@ -3,11 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
+import { useAppSelector } from "../store/store";
 const NavBar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
-
+  const { customer, isAuthenticated } = useAppSelector((state) => state.auth);
   return (
     <nav className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -19,10 +19,15 @@ const NavBar = () => {
         <div className="hidden md:flex space-x-6">
           <Link to="/" className="hover:text-primary">Home</Link>
           <Link to="/search" className="hover:text-primary">Search Flights</Link>
-          <Link to="/bookings" className="hover:text-primary">My Bookings</Link>
+          {customer?.role === "CUSTOMER" && <Link to="/bookings" className="hover:text-primary">My Bookings</Link>}
+          {customer?.role === "ADMIN" && <Link to="/addFlight" className="hover:text-primary">Add Flight</Link>}
           <Link to="/profile" className="hover:text-primary">Profile</Link>
-          <Link to="/login" className="hover:text-primary">Login</Link>
-          <Link to="/register" className="hover:text-primary">Register</Link>
+          {customer?.role == null ? (
+            <>
+              <Link to="/login" className="hover:text-primary">Login</Link>
+             <Link to="/register" className="hover:text-primary">Register</Link>
+           </>
+         ) : null}
         </div>
 
         {/* Mobile menu button */}

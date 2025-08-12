@@ -19,6 +19,9 @@ import { AlertCircle, Loader2, CheckCircle2, LogOut } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AuthService } from '@/lib/api';
 import { Customer } from '@/types.ts';
+import { QueryClient } from '@tanstack/react-query';
+import { useDispatch } from 'react-redux';
+import { logout } from '@/store/authSlice';
 
 // Mock customer data for demonstration
 const MOCK_CUSTOMER: Customer = {
@@ -59,7 +62,7 @@ const ProfilePage = () => {
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+  const dispatch = useDispatch();
   useEffect(() => {
     // Check if user is authenticated
    /* if (!AuthService.isAuthenticated()) {
@@ -144,12 +147,18 @@ const ProfilePage = () => {
     navigate('/login');
   };*/
 
-  const handleLogout = () => {
-  // Instead of AuthService.clearToken(), manually clear token or skip
-  localStorage.removeItem('token');  // clear token directly
-  navigate('/login');
+const handleLogout = () => {
+  // Clear tokens
+  localStorage.removeItem("token");
+  sessionStorage.removeItem("token");
+
+  // Reset Redux state
+  dispatch(logout());
+
+ // Redirect
+  navigate("/login", { replace: true });
 };
-  
+
   if (isLoading && !customer) {
     return (
       <div className="container py-8 flex justify-center items-center min-h-[400px]">

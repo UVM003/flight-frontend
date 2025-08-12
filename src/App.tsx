@@ -14,10 +14,26 @@ import BookingPage from './pages/BookingPage';
 import BookingSuccessPage from './pages/BookingSuccessPage';
 import MyBookingsPage from './pages/MyBookingsPage';
 import NotFound from './pages/NotFound';
+import UpdateFlightPage from './pages/UpdateFlightPage.tsx';
+import { useEffect, useState } from 'react';
+import AddFlightPage from './pages/AddFlightPage.tsx';
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "./store/authSlice";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+    const dispatch = useDispatch();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const customer = JSON.parse(localStorage.getItem("customer"));
+    if (token && customer) {
+      dispatch(loginSuccess({ token, customer }));
+    }
+  }, [dispatch]);
+  
+  return(
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -29,12 +45,14 @@ const App = () => (
               <Route path="/" element={<HomePage />} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/flights/:flightId" element={<FlightDetailsPage />} />
-              <Route path="/login" element={<LoginPage />} />
+              <Route path="/login" element={<LoginPage />} /> 
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/booking/:flightId" element={<BookingPage />} />
+              <Route path="/update/:flightId" element={<UpdateFlightPage />} />
               <Route path="/booking-success" element={<BookingSuccessPage />} />
               <Route path="/bookings" element={<MyBookingsPage />} />
+              <Route path="/addFlight" element={<AddFlightPage/>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
@@ -44,5 +62,5 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
-
+}
 export default App;

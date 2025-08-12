@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 // Mock data for demo purposes
 const MOCK_FLIGHTS = [
   {
-    flightId: 1,
+    flightId: 4,
     flightNumber: "AI101",
     airlineName: "Air India",
     fromAirport: "DEL",
