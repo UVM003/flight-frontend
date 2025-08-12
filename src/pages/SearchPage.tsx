@@ -16,7 +16,6 @@ import {
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
-// Mock data for demo purposes
 const MOCK_FLIGHTS = [
   {
     flightId: 1,
@@ -69,11 +68,8 @@ const SearchPage = () => {
 
   const handleSearch = () => {
     setIsLoading(true);
-    
-    // In a real implementation, this would be an API call
     setTimeout(() => {
       setIsLoading(false);
-      // Using mock data for now
       setFlights(MOCK_FLIGHTS);
     }, 1000);
   };
@@ -86,9 +82,9 @@ const SearchPage = () => {
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
       setDate(date);
-      setSearchParams((prev) => ({ 
-        ...prev, 
-        departureDate: format(date, 'yyyy-MM-dd') 
+      setSearchParams((prev) => ({
+        ...prev,
+        departureDate: format(date, 'yyyy-MM-dd')
       }));
     }
   };
@@ -97,7 +93,6 @@ const SearchPage = () => {
     navigate(`/flights/${flightId}`);
   };
 
-  // Format duration between departure and arrival
   const calculateDuration = (departureTime: string, arrivalTime: string) => {
     const dep = new Date(departureTime);
     const arr = new Date(arrivalTime);
@@ -108,139 +103,149 @@ const SearchPage = () => {
   };
 
   return (
-    <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-6">Search Flights</h1>
-      
-      {/* Search Form */}
-      <Card className="mb-8">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-            <div className="space-y-2">
-              <Label htmlFor="fromAirport">From</Label>
-              <Input
-                id="fromAirport"
-                name="fromAirport"
-                placeholder="Departure City or Airport"
-                value={searchParams.fromAirport}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="toAirport">To</Label>
-              <Input
-                id="toAirport"
-                name="toAirport"
-                placeholder="Destination City or Airport"
-                value={searchParams.toAirport}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Departure Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={handleDateChange}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+    <div
+      className="w-full min-h-screen bg-cover bg-center"
+      style={{ backgroundImage: "url('/suitcase.jpeg')" }}
+    >
+      {/* Overlay for readability */}
+      <div className="w-full min-h-screen bg-black/30">
+        <div className="container py-10">
+          <h1 className="text-4xl font-extrabold text-center mb-10 text-primary">
+            Search Flights
+          </h1>
 
-            <div className="md:col-span-3">
-              <Button 
-                className="w-full md:w-auto" 
-                onClick={handleSearch}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Plane className="mr-2 h-4 w-4" />
-                    Search Flights
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Results */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">
-          {flights.length > 0 ? `${flights.length} Flights Found` : "No Flights Found"}
-        </h2>
-        
-        {flights.map((flight) => (
-          <Card key={flight.flightId} className="overflow-hidden">
-            <CardContent className="p-0">
-              <div className="p-6">
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                  <div className="space-y-1">
-                    <div className="font-semibold text-lg">{flight.airlineName}</div>
-                    <div className="text-muted-foreground text-sm">{flight.flightNumber}</div>
-                  </div>
-                  
-                  <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-                    <div className="text-center">
-                      <div className="text-xl font-semibold">{format(new Date(flight.departureTime), "HH:mm")}</div>
-                      <div className="text-muted-foreground">{flight.fromAirport}</div>
-                    </div>
-                    
-                    <div className="flex flex-col items-center">
-                      <div className="text-sm text-muted-foreground">
-                        {calculateDuration(flight.departureTime, flight.arrivalTime)}
-                      </div>
-                      <div className="relative w-24 md:w-32">
-                        <Separator className="my-2" />
-                        <Plane className="h-4 w-4 absolute -right-2 top-0 -translate-y-1/2" />
-                      </div>
-                      <div className="text-sm text-muted-foreground">Direct</div>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-xl font-semibold">{format(new Date(flight.arrivalTime), "HH:mm")}</div>
-                      <div className="text-muted-foreground">{flight.toAirport}</div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="text-2xl font-bold">₹{flight.baseFare}</div>
-                    <Badge variant={flight.availableSeats > 30 ? "outline" : "secondary"}>
-                      {flight.availableSeats} seats left
-                    </Badge>
-                  </div>
+          {/* Search Form */}
+          <Card className="mb-10 shadow-lg rounded-2xl bg-gradient-to-br from-blue-50 to-white">
+            <CardContent className="pt-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                <div className="space-y-2">
+                  <Label htmlFor="fromAirport" className="font-semibold text-gray-700">From</Label>
+                  <Input
+                    id="fromAirport"
+                    name="fromAirport"
+                    placeholder="Departure City or Airport"
+                    value={searchParams.fromAirport}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="toAirport" className="font-semibold text-gray-700">To</Label>
+                  <Input
+                    id="toAirport"
+                    name="toAirport"
+                    placeholder="Destination City or Airport"
+                    value={searchParams.toAirport}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="font-semibold text-gray-700">Departure Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal bg-white",
+                          !date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={handleDateChange}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="md:col-span-3">
+                  <Button
+                    className="w-full md:w-auto px-6 py-2 text-lg rounded-xl"
+                    onClick={handleSearch}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Searching...
+                      </>
+                    ) : (
+                      <>
+                        <Plane className="mr-2 h-4 w-4" />
+                        Search Flights
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="bg-muted/20 p-4 flex justify-end">
-              <Button onClick={() => handleViewFlight(flight.flightId)}>
-                View Details
-              </Button>
-            </CardFooter>
           </Card>
-        ))}
+
+          {/* Results */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold">
+              {flights.length > 0 ? `${flights.length} Flights Found` : "No Flights Found"}
+            </h2>
+
+            {flights.map((flight) => (
+              <Card key={flight.flightId} className="overflow-hidden shadow-md hover:shadow-lg transition-all rounded-2xl">
+                <CardContent className="p-0">
+                  <div className="p-6">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
+                      <div className="space-y-1">
+                        <div className="font-semibold text-lg">{flight.airlineName}</div>
+                        <div className="text-muted-foreground text-sm">{flight.flightNumber}</div>
+                      </div>
+
+                      <div className="flex flex-col md:flex-row items-center gap-6">
+                        <div className="text-center">
+                          <div className="text-xl font-semibold">{format(new Date(flight.departureTime), "HH:mm")}</div>
+                          <div className="text-muted-foreground">{flight.fromAirport}</div>
+                        </div>
+
+                        <div className="flex flex-col items-center">
+                          <div className="text-sm text-muted-foreground">
+                            {calculateDuration(flight.departureTime, flight.arrivalTime)}
+                          </div>
+                          <div className="relative w-24 md:w-32">
+                            <Separator className="my-2" />
+                            <Plane className="h-4 w-4 absolute -right-2 top-0 -translate-y-1/2" />
+                          </div>
+                          <div className="text-sm text-muted-foreground">Direct</div>
+                        </div>
+
+                        <div className="text-center">
+                          <div className="text-xl font-semibold">{format(new Date(flight.arrivalTime), "HH:mm")}</div>
+                          <div className="text-muted-foreground">{flight.toAirport}</div>
+                        </div>
+                      </div>
+
+                      <div className="text-center md:text-right">
+                        <div className="text-2xl font-bold text-primary">₹{flight.baseFare}</div>
+                        <Badge variant={flight.availableSeats > 30 ? "outline" : "secondary"} className="mt-1">
+                          {flight.availableSeats} seats left
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="bg-muted/20 p-4 flex justify-end">
+                  <Button onClick={() => handleViewFlight(flight.flightId)} className="rounded-lg">
+                    View Details
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
