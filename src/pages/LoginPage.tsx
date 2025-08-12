@@ -47,20 +47,20 @@ const LoginPage = () => {
     setIsLoading(true);
     setError(null);
     
-    setTimeout(() => {
-      if (data.email === 'admin@example.com' && data.password === 'admin123') {
-        AuthService.setToken('mock-jwt-token');
-        AuthService.setUserRole('ADMIN');
-        navigate(from);
-      } else if (data.email === 'user@example.com' && data.password === 'user123') {
-        AuthService.setToken('mock-jwt-token');
-        AuthService.setUserRole('CUSTOMER');
-        navigate(from);
-      } else {
-        setError('Invalid email or password. Please try again.');
-      }
-      setIsLoading(false);
-    }, 1000);
+    // setTimeout(() => {
+    //   if (data.email === 'admin@example.com' && data.password === 'admin123') {
+    //     AuthService.setToken('mock-jwt-token');
+    //     AuthService.setUserRole('ADMIN');
+    //     navigate(from);
+    //   } else if (data.email === 'user@example.com' && data.password === 'user123') {
+    //     AuthService.setToken('mock-jwt-token');
+    //     AuthService.setUserRole('CUSTOMER');
+    //     navigate(from);
+    //   } else {
+    //     setError('Invalid email or password. Please try again.');
+    //   }
+    //   setIsLoading(false);
+    // }, 1000);
   };
 
   return (

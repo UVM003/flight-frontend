@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Checkbox } from "@/components/ui/checkbox";
-
+//airport lists
 const airports = [
   { code: "BLR", name: "Bengaluru: Kempegowda International Airport" },
   { code: "DEL", name: "Delhi: Indira Gandhi International Airport" },
@@ -97,7 +97,7 @@ const SearchPage = () => {
       );
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch flights");
+        throw new Error(errorData.error || "No available flights");
       }
       const data = await response.json();
       setFlights(data);
