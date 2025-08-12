@@ -12,8 +12,46 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Slider } from "@/components/ui/slider";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Checkbox } from "@/components/ui/checkbox";
+
+// Mock data for demo purposes
+const MOCK_FLIGHTS = [
+  {
+    flightId: 1,
+    flightNumber: "AI101",
+    airlineName: "Air India",
+    fromAirport: "DEL",
+    toAirport: "BOM",
+    departureTime: "2023-08-10T08:00:00",
+    arrivalTime: "2023-08-10T10:00:00",
+    totalSeats: 180,
+    availableSeats: 45,
+    baseFare: 3500,
+  },
+  {
+    flightId: 2,
+    flightNumber: "UK203",
+    airlineName: "Vistara",
+    fromAirport: "DEL",
+    toAirport: "BOM",
+    departureTime: "2023-08-10T12:30:00",
+    arrivalTime: "2023-08-10T14:45:00",
+    totalSeats: 150,
+    availableSeats: 22,
+    baseFare: 4200,
+  },
+  {
+    flightId: 3,
+    flightNumber: "SG812",
+    airlineName: "SpiceJet",
+    fromAirport: "DEL",
+    toAirport: "BOM",
+    departureTime: "2023-08-10T16:15:00",
+    arrivalTime: "2023-08-10T18:30:00",
+    totalSeats: 186,
+    availableSeats: 76,
+    baseFare: 2900,
+  }
+];
 
 const SearchPage = () => {
   const navigate = useNavigate();
@@ -48,40 +86,13 @@ const SearchPage = () => {
     }
 
     setIsLoading(true);
-    try {
-      const params = new URLSearchParams({
-        fromAirport: searchParams.fromAirport,
-        toAirport: searchParams.toAirport,
-        departureDate: searchParams.departureDate,
-        page: String(page),
-        size: String(pageSize)
-      });
-
-      if (selectedAirlines.length > 0 && selectedAirlines.length < airlines.length) {
-        selectedAirlines.forEach(airline => params.append("airlineName", airline));
-      }
-      if (fareRange[0] > 0) params.append("minFare", String(fareRange[0]));
-      if (fareRange[1] < 10000) params.append("maxFare", String(fareRange[1]));
-      if (minSeats) params.append("minSeats", String(minSeats));
-
-      const response = await fetch(
-        `http://localhost:8086/api/filter/flights/search/advanced?${params}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch flights");
-      const data = await response.json();
-      setFlights(data);
-      setCurrentPage(page);
-    } catch (error) {
-      console.error("Error fetching flights:", error);
-      setFlights([]);
-    } finally {
+    
+    // In a real implementation, this would be an API call
+    setTimeout(() => {
       setIsLoading(false);
-    }
-  };
-
-  const handleSearch = () => {
-    setFiltersOpen(false); // Close filters
-    fetchFlights(0); // reset to first page
+      // Using mock data for now
+      setFlights(MOCK_FLIGHTS);
+    }, 1000);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,22 +114,7 @@ const SearchPage = () => {
     navigate(`/flights/${flightId}`);
   };
 
-  const toggleAirline = (airline: string) => {
-    setSelectedAirlines((prev) =>
-      prev.includes(airline)
-        ? prev.filter((a) => a !== airline)
-        : [...prev, airline]
-    );
-  };
-
-  const toggleSelectAllAirlines = () => {
-    if (selectedAirlines.length === airlines.length) {
-      setSelectedAirlines([]);
-    } else {
-      setSelectedAirlines([...airlines]);
-    }
-  };
-
+  // Format duration between departure and arrival
   const calculateDuration = (departureTime: string, arrivalTime: string) => {
     const dep = new Date(departureTime);
     const arr = new Date(arrivalTime);
@@ -131,7 +127,7 @@ const SearchPage = () => {
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold mb-6">Search Flights</h1>
-
+      
       {/* Search Form */}
       <Card className="mb-8">
         <CardContent className="pt-6">
@@ -146,7 +142,7 @@ const SearchPage = () => {
                 onChange={handleInputChange}
               />
             </div>
-
+            
             <div className="space-y-2">
               <Label htmlFor="toAirport">To</Label>
               <Input
@@ -157,7 +153,7 @@ const SearchPage = () => {
                 onChange={handleInputChange}
               />
             </div>
-
+            
             <div className="space-y-2">
               <Label>Departure Date</Label>
               <Popover>
@@ -184,10 +180,9 @@ const SearchPage = () => {
               </Popover>
             </div>
 
-            {/* Search & Filters simply*/}
-            <div className="md:col-span-3 flex gap-2">
-              <Button
-                className="w-full md:w-auto"
+            <div className="md:col-span-3">
+              <Button 
+                className="w-full md:w-auto" 
                 onClick={handleSearch}
                 disabled={isLoading}
               >
@@ -203,163 +198,66 @@ const SearchPage = () => {
                   </>
                 )}
               </Button>
-
-              {/* Filters Popover */}
-              <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline">
-                    <SlidersHorizontal className="mr-2 h-4 w-4" />
-                    Filters
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-4 space-y-4">
-                  {/* Airline checkboxes */}
-                  <div>
-                    <Label>Airlines</Label>
-                    <div className="space-y-2 mt-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={selectedAirlines.length === airlines.length}
-                          onCheckedChange={toggleSelectAllAirlines}
-                        />
-                        <span>Select All</span>
-                      </div>
-                      {airlines.map((airline) => (
-                        <div key={airline} className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={selectedAirlines.includes(airline)}
-                            onCheckedChange={() => toggleAirline(airline)}
-                          />
-                          <span>{airline}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Fare Range</Label>
-                    <Slider
-                      value={fareRange}
-                      onValueChange={setFareRange}
-                      max={10000}
-                      step={500}
-                    />
-                    <div className="flex justify-between text-sm mt-1">
-                      <span>₹{fareRange[0]}</span>
-                      <span>₹{fareRange[1]}</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Minimum Seats</Label>
-                    <Input
-                      type="number"
-                      value={minSeats}
-                      onChange={(e) => setMinSeats(e.target.value)}
-                    />
-                  </div>
-
-                  <Button className="w-full" onClick={handleSearch}>
-                    Apply Filters
-                  </Button>
-                </PopoverContent>
-              </Popover>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Results with smooth transition */}
+      
+      {/* Results */}
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold">
-          {isLoading
-            ? "Loading..."
-            : flights.length > 0
-              ? `${flights.length} Flights Found`
-              : "No Flights Found"}
+          {flights.length > 0 ? `${flights.length} Flights Found` : "No Flights Found"}
         </h2>
-
-        <AnimatePresence>
-          {flights.map((flight) => (
-            <motion.div
-              key={flight.flightId}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="p-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                    <div className="space-y-1">
-                      <div className="font-semibold text-lg">{flight.airlineName}</div>
-                      <div className="text-muted-foreground text-sm">{flight.flightNumber}</div>
+        
+        {flights.map((flight) => (
+          <Card key={flight.flightId} className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="p-6">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                  <div className="space-y-1">
+                    <div className="font-semibold text-lg">{flight.airlineName}</div>
+                    <div className="text-muted-foreground text-sm">{flight.flightNumber}</div>
+                  </div>
+                  
+                  <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
+                    <div className="text-center">
+                      <div className="text-xl font-semibold">{format(new Date(flight.departureTime), "HH:mm")}</div>
+                      <div className="text-muted-foreground">{flight.fromAirport}</div>
                     </div>
-
-                    <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-                      <div className="text-center">
-                        <div className="text-xl font-semibold">
-                          {format(new Date(flight.departureTime), "HH:mm")}
-                        </div>
-                        <div className="text-muted-foreground">{flight.fromAirport}</div>
+                    
+                    <div className="flex flex-col items-center">
+                      <div className="text-sm text-muted-foreground">
+                        {calculateDuration(flight.departureTime, flight.arrivalTime)}
                       </div>
-
-                      <div className="flex flex-col items-center">
-                        <div className="text-sm text-muted-foreground">
-                          {calculateDuration(flight.departureTime, flight.arrivalTime)}
-                        </div>
-                        <div className="relative w-24 md:w-32">
-                          <Separator className="my-2" />
-                          <Plane className="h-4 w-4 absolute -right-2 top-0 -translate-y-1/2" />
-                        </div>
-                        <div className="text-sm text-muted-foreground">Direct</div>
+                      <div className="relative w-24 md:w-32">
+                        <Separator className="my-2" />
+                        <Plane className="h-4 w-4 absolute -right-2 top-0 -translate-y-1/2" />
                       </div>
-
-                      <div className="text-center">
-                        <div className="text-xl font-semibold">
-                          {format(new Date(flight.arrivalTime), "HH:mm")}
-                        </div>
-                        <div className="text-muted-foreground">{flight.toAirport}</div>
-                      </div>
+                      <div className="text-sm text-muted-foreground">Direct</div>
                     </div>
-
-                    <div>
-                      <div className="text-2xl font-bold">₹{flight.baseFare}</div>
-                      <Badge variant={flight.availableSeats > 30 ? "outline" : "secondary"}>
-                        {flight.availableSeats} seats left
-                      </Badge>
+                    
+                    <div className="text-center">
+                      <div className="text-xl font-semibold">{format(new Date(flight.arrivalTime), "HH:mm")}</div>
+                      <div className="text-muted-foreground">{flight.toAirport}</div>
                     </div>
                   </div>
-                </CardContent>
-                <CardFooter className="bg-muted/20 p-4 flex justify-end">
-                  <Button onClick={() => handleViewFlight(flight.flightId)}>
-                    View Details
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-
-        {/* Pagination Controls */}
-        {flights.length > 0 && (
-          <div className="flex justify-between mt-6">
-            <Button
-              variant="outline"
-              disabled={currentPage === 0}
-              onClick={() => fetchFlights(currentPage - 1)}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              disabled={flights.length < pageSize}
-              onClick={() => fetchFlights(currentPage + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        )}
+                  
+                  <div>
+                    <div className="text-2xl font-bold">₹{flight.baseFare}</div>
+                    <Badge variant={flight.availableSeats > 30 ? "outline" : "secondary"}>
+                      {flight.availableSeats} seats left
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="bg-muted/20 p-4 flex justify-end">
+              <Button onClick={() => handleViewFlight(flight.flightId)}>
+                View Details
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
       </div>
     </div>
   );
