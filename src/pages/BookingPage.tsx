@@ -105,7 +105,7 @@ const BookingPage = () => {
   
   // Function to add a passenger
   const onAddPassenger = (data: PassengerFormValues) => {
-  setPassengers([...passengers, data as PassengerInfo]);  // <-- add `as PassengerInfo` type assertion
+  setPassengers([...passengers, data as PassengerInfo]);  // <-- add as PassengerInfo type assertion
   passengerForm.reset();
 
   if (passengers.length + 1 >= numberOfTickets) {
@@ -117,24 +117,24 @@ const BookingPage = () => {
   const onPaymentSubmit = (data: PaymentFormValues) => {
     setIsLoading(true);
     
-    // In a real app, make API call to create booking
-    setTimeout(() => {
-      const bookingData = {
-        flightId: Number(flightId),
-        noOfTickets: passengers.length,
-        totalFare: calculateTotalFare(),
-        passengers,
-        paymentId: `PAY-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      };
-      
-      console.log('Booking data:', bookingData);
+   // In a real app, make API call to create booking
+setTimeout(() => {
+  const bookingData = {
+    flightId: Number(flightId),
+    noOfTickets: passengers.length,
+    totalFare: calculateTotalFare(),
+    passengers,
+    paymentId: `PAY-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+  };
+
+  console.log('Booking data:', bookingData);
       
       // Navigate to success page with booking details
-      navigate('/booking-success', {
-        state: {
-          bookingId: `BK${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-          flightNumber: flight.flightNumber,
-        }
+    navigate('/booking-success', {
+     state: {
+    bookingId: `BK${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+    flightNumber: flight.flightNumber,
+  }
       });
       
       setIsLoading(false);
