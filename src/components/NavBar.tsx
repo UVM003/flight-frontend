@@ -11,12 +11,20 @@ const NavBar = () => {
   return (
     <nav className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="text-2xl font-bold text-primary">
-          FlightBooker
-        </Link>
+        
+        <Link to="/" className="flex items-center space-x-3 relative">
+  <img 
+    src="/logo_transparent.png"
+    alt="SkyConnect Logo" 
+    className="h-16 w-auto object-contain scale-150 transform -translate-y-1" 
+    style={{ transformOrigin: "left center" }}
+  />
+  <span className="text-2xl font-bold text-primary">Sky Connect</span>
+</Link>
+
         
         {/* Desktop menu */}
-        <div className="hidden md:flex space-x-6">
+        <div className="hidden md:flex space-x-6 text-lg">
           <Link to="/" className="hover:text-primary">Home</Link>
           <Link to="/search" className="hover:text-primary">Search Flights</Link>
           <Link to="/bookings" className="hover:text-primary">My Bookings</Link>
@@ -38,7 +46,7 @@ const NavBar = () => {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden bg-white shadow-md">
-          <div className="flex flex-col space-y-2 px-4 py-3">
+          <div className="flex flex-col space-y-2 px-4 py-3 text-lg">
             <Link to="/" className="block hover:text-primary" onClick={() => setMenuOpen(false)}>Home</Link>
             <Link to="/search" className="block hover:text-primary" onClick={() => setMenuOpen(false)}>Search Flights</Link>
             <Link to="/bookings" className="block hover:text-primary" onClick={() => setMenuOpen(false)}>My Bookings</Link>

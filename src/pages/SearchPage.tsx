@@ -139,22 +139,7 @@ const SearchPage = () => {
     navigate(`/flights/${flightId}`);
   };
 
-  const toggleAirline = (airline: string) => {
-    setSelectedAirlines((prev) =>
-      prev.includes(airline)
-        ? prev.filter((a) => a !== airline)
-        : [...prev, airline]
-    );
-  };
-
-  const toggleSelectAllAirlines = () => {
-    if (selectedAirlines.length === airlines.length) {
-      setSelectedAirlines([]);
-    } else {
-      setSelectedAirlines([...airlines]);
-    }
-  };
-
+  // Format duration between departure and arrival
   const calculateDuration = (departureTime: string, arrivalTime: string) => {
     const dep = new Date(departureTime);
     const arr = new Date(arrivalTime);
@@ -167,7 +152,7 @@ const SearchPage = () => {
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold mb-6">Search Flights</h1>
-
+      
       {/* Search Form */}
       <Card className="mb-8">
         <CardContent className="pt-6">
@@ -213,7 +198,7 @@ const SearchPage = () => {
                 ))}
               </select>
             </div>
-
+            
             <div className="space-y-2">
               <Label>Departure Date</Label>
               {/* ... same calendar popover as before ... */}
@@ -246,10 +231,9 @@ const SearchPage = () => {
               </Popover>
             </div>
 
-            {/* Search & Filters */}
-            <div className="md:col-span-3 flex gap-2">
-              <Button
-                className="w-full md:w-auto"
+            <div className="md:col-span-3">
+              <Button 
+                className="w-full md:w-auto" 
                 onClick={handleSearch}
                 disabled={isLoading}
               >
@@ -336,11 +320,7 @@ const SearchPage = () => {
       {/* Results */}
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold">
-          {isLoading
-            ? "Loading..."
-            : flights.length > 0
-              ? `${flights.length} Flights Found`
-              : "No Flights Found"}
+          {flights.length > 0 ? `${flights.length} Flights Found` : "No Flights Found"}
         </h2>
 
         <AnimatePresence>
