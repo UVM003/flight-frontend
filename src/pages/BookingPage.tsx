@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -22,32 +21,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
+import {
   Table,
   TableBody,
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import { Separator } from '@/components/ui/separator';
 import { Loader2, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
-import { PassengerInfo } from '@/types.ts';
-
-// Mock flight data for demonstration
-const MOCK_FLIGHT = {
-  flightId: 1,
-  flightNumber: "AI101",
-  airlineName: "Air India",
-  fromAirport: "DEL",
-  toAirport: "BOM",
-  departureTime: "2023-08-10T08:00:00",
-  arrivalTime: "2023-08-10T10:00:00",
-  totalSeats: 180,
-  availableSeats: 45,
-  baseFare: 3500,
-};
+import { PassengerInfo, Flight } from '@/types.ts';
+import { useAppSelector } from '../store/store';
+import api from '@/lib/axiosApi';
+import { toast } from 'sonner';
 
 // Passenger form schema
 const passengerSchema = z.object({
@@ -55,8 +43,6 @@ const passengerSchema = z.object({
   lastName: z.string().min(1, { message: 'Last name is required' }),
   age: z.coerce.number().int().min(0).max(120),
   gender: z.string().min(1, { message: 'Gender is required' }),
-  seatPreference: z.string().optional(),
-  mealPreference: z.string().optional(),
 });
 
 // Payment form schema
@@ -75,10 +61,13 @@ const BookingPage = () => {
   const { flightId } = useParams<{ flightId: string }>();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isFormLoading, setIsFormLoading] = useState(false);
   const [passengers, setPassengers] = useState<PassengerInfo[]>([]);
-  const [flight] = useState(MOCK_FLIGHT); // In a real app, fetch this data
+  const [flight, setFlight] = useState<Flight | null>(null);
   const [numberOfTickets, setNumberOfTickets] = useState(1);
+  const [seatClass, setSeatClass] = useState('ECONOMY');
+  const { customer } = useAppSelector((state) => state.auth);
+
   const passengerForm = useForm<PassengerFormValues>({
     resolver: zodResolver(passengerSchema),
     defaultValues: {
@@ -86,8 +75,6 @@ const BookingPage = () => {
       lastName: '',
       age: 30,
       gender: '',
-      seatPreference: '',
-      mealPreference: '',
     },
   });
   
@@ -101,71 +88,116 @@ const BookingPage = () => {
       cvv: '',
     },
   });
-  
-  // Function to add a passenger
+
+  // Fetch flight details from API when the page loads
+  useEffect(() => {
+    const fetchFlightDetails = async () => {
+      try {
+        const response = await api.get(`/api/flights/${flightId}`);
+        setFlight(response.data);
+      } catch (error) {
+        console.error("Error fetching flight details:", error);
+        toast.error("Failed to load flight details.");
+        navigate('/search');
+      }
+    };
+    fetchFlightDetails();
+  }, [flightId, navigate]);
+
   const onAddPassenger = (data: PassengerFormValues) => {
-  setPassengers([...passengers, data as PassengerInfo]);  // <-- add as PassengerInfo type assertion
-  passengerForm.reset();
+    setPassengers([...passengers, data as PassengerInfo]);
+    passengerForm.reset();
 
-  if (passengers.length + 1 >= numberOfTickets) {
-    setCurrentStep(2);
-  }
-};
-  
-  // Function to handle payment submission
-  const onPaymentSubmit = (data: PaymentFormValues) => {
-    setIsLoading(true);
-    
-   // In a real app, make API call to create booking
-setTimeout(() => {
-  const bookingData = {
-    flightId: Number(flightId),
-    noOfTickets: passengers.length,
-    totalFare: calculateTotalFare(),
-    passengers,
-    paymentId: `PAY-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+    if (passengers.length + 1 >= numberOfTickets) {
+      setCurrentStep(2);
+    }
   };
 
-  console.log('Booking data:', bookingData);
-      
-      // Navigate to success page with booking details
-    navigate('/booking-success', {
-     state: {
-    bookingId: `BK${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-    flightNumber: flight.flightNumber,
-  }
+  const onPaymentSubmit = async (data: PaymentFormValues) => {
+    setIsFormLoading(true);
+
+    if (!flight || !customer) {
+      toast.error("Booking failed. Please try again.");
+      setIsFormLoading(false);
+      return;
+    }
+
+    try {
+      const passengerInfoDTOs = passengers.map(p => ({
+        fullName: `${p.firstName} ${p.lastName}`,
+        age: p.age,
+        gender: p.gender,
+        seatNumber: p.seatPreference || 'N/A',
+      }));
+
+      const bookingData = {
+        customerId: customer.customerId,
+        flightId: Number(flightId),
+        journeyDate: format(new Date(flight.departureTime), "yyyy-MM-dd"),
+        seatClass: seatClass,
+        passengers: passengerInfoDTOs,
+        paymentMode: 'Credit Card',
+      };
+
+      console.log('Booking payload:', bookingData);
+
+      const response = await api.post("/api/tickets/book", bookingData);
+      const bookingResponse = response.data;
+
+      toast.success("Booking successful!");
+
+      navigate('/booking-success', {
+        state: {
+          bookingId: bookingResponse.bookingId,
+          flightNumber: flight.flightNumber,
+        }
       });
-      
-      setIsLoading(false);
-    }, 2000);
+    } catch (error) {
+      console.error("Booking failed:", error);
+      toast.error("Booking failed. Please try again.");
+    } finally {
+      setIsFormLoading(false);
+    }
   };
-  
+
   const handleRemovePassenger = (index: number) => {
     const updatedPassengers = [...passengers];
     updatedPassengers.splice(index, 1);
     setPassengers(updatedPassengers);
   };
-  
+
   const calculateTotalFare = () => {
+    if (!flight) return 0;
     return flight.baseFare * numberOfTickets;
   };
-  
+
   const calculateTaxes = () => {
     return Math.round(calculateTotalFare() * 0.18);
   };
-  
+
   const calculateGrandTotal = () => {
     return calculateTotalFare() + calculateTaxes();
   };
+
+  if (!flight) {
+    return (
+      <div className="container py-8 flex justify-center items-center min-h-[400px]">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-8 w-8 animate-spin mb-4" />
+          <p>Loading flight details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold mb-2">Book Flight</h1>
       <p className="text-muted-foreground mb-6">
-        {flight.airlineName} - {flight.flightNumber} | {flight.fromAirport} to {flight.toAirport} | 
+        {flight.airlineName} - {flight.flightNumber} | {flight.fromAirport} to {flight.toAirport} |
         {format(new Date(flight.departureTime), " MMM d, yyyy")}
       </p>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           {currentStep === 1 && (
@@ -175,31 +207,52 @@ setTimeout(() => {
               </CardHeader>
               <CardContent>
                 <div className="mb-4">
-  <label className="block text-sm font-medium mb-1">Number of Tickets</label>
-  <Select 
-    value={numberOfTickets.toString()}
-    onValueChange={(value) => setNumberOfTickets(Number(value))}
-  >
-    <SelectTrigger className="w-full md:w-40">
-      <SelectValue placeholder="Select" />
-    </SelectTrigger>
-    <SelectContent>
-      {[1, 2, 3, 4, 5].map((num) => (
-        <SelectItem 
-          key={num} 
-          value={num.toString()}
-          disabled={num > flight.availableSeats}
-        >
-          {num} {num === 1 ? 'Passenger' : 'Passengers'}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-  <p className="text-sm text-muted-foreground mt-1">
-    {flight.availableSeats} seats available on this flight
-  </p>
-</div>
-                
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium mb-1">Number of Tickets</label>
+                      <Select
+                        value={numberOfTickets.toString()}
+                        onValueChange={(value) => setNumberOfTickets(Number(value))}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1, 2, 3, 4, 5].map((num) => (
+                            <SelectItem
+                              key={num}
+                              value={num.toString()}
+                              disabled={num > flight.availableSeats}
+                            >
+                              {num} {num === 1 ? 'Passenger' : 'Passengers'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {flight.availableSeats} seats available on this flight
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium mb-1">Seat Class</label>
+                      <Select
+                        value={seatClass}
+                        onValueChange={(value) => setSeatClass(value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select seat class" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ECONOMY">Economy</SelectItem>
+                          <SelectItem value="FIRST">First Class</SelectItem>
+                          <SelectItem value="BUSINESS">Business Class</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Added Passengers List */}
                 {passengers.length > 0 && (
                   <div className="mb-6">
@@ -220,8 +273,8 @@ setTimeout(() => {
                             <TableCell>{passenger.age}</TableCell>
                             <TableCell>{passenger.gender}</TableCell>
                             <TableCell>
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => handleRemovePassenger(index)}
                               >
@@ -234,13 +287,13 @@ setTimeout(() => {
                     </Table>
                   </div>
                 )}
-                
+
                 {passengers.length < numberOfTickets && (
                   <div>
                     <h3 className="text-lg font-medium mb-4">
                       Add Passenger {passengers.length + 1} of {numberOfTickets}
                     </h3>
-                    
+
                   <Form {...passengerForm}>
                       <form onSubmit={passengerForm.handleSubmit(onAddPassenger)} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -271,7 +324,7 @@ setTimeout(() => {
                             )}
                           />
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <FormField
                             control={passengerForm.control}
@@ -280,10 +333,10 @@ setTimeout(() => {
                               <FormItem>
                                 <FormLabel>Age</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    min="0" 
-                                    max="120" 
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="120"
                                     {...field}
                                   />
                                 </FormControl>
@@ -297,8 +350,8 @@ setTimeout(() => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Gender</FormLabel>
-                                <Select 
-                                  onValueChange={field.onChange} 
+                                <Select
+                                  onValueChange={field.onChange}
                                   defaultValue={field.value}
                                 >
                                   <FormControl>
@@ -317,74 +370,20 @@ setTimeout(() => {
                             )}
                           />
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={passengerForm.control}
-                            name="seatPreference"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Seat Preference</FormLabel>
-                                <Select 
-                                  onValueChange={field.onChange} 
-                                  defaultValue={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select preference" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="Window">Window</SelectItem>
-                                    <SelectItem value="Aisle">Aisle</SelectItem>
-                                    <SelectItem value="Middle">Middle</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={passengerForm.control}
-                            name="mealPreference"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Meal Preference</FormLabel>
-                                <Select 
-                                  onValueChange={field.onChange} 
-                                  defaultValue={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select preference" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="Vegetarian">Vegetarian</SelectItem>
-                                    <SelectItem value="Non-Vegetarian">Non-Vegetarian</SelectItem>
-                                    <SelectItem value="Vegan">Vegan</SelectItem>
-                                    <SelectItem value="None">No meal</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
+
                         <Button type="submit">
                           {passengers.length === numberOfTickets - 1
                             ? "Add & Continue to Payment"
                             : "Add Passenger"}
                         </Button>
                       </form>
-                    </Form> 
+                    </Form>
                   </div>
                 )}
               </CardContent>
             </Card>
           )}
-          
+
           {currentStep === 2 && (
             <Card>
               <CardHeader>
@@ -400,8 +399,8 @@ setTimeout(() => {
                         <FormItem>
                           <FormLabel>Card Number</FormLabel>
                           <FormControl>
-                            <Input 
-                              placeholder="1234 5678 9012 3456" 
+                            <Input
+                              placeholder="1234 5678 9012 3456"
                               {...field}
                               maxLength={16}
                             />
@@ -410,7 +409,7 @@ setTimeout(() => {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={paymentForm.control}
                       name="cardholderName"
@@ -424,7 +423,7 @@ setTimeout(() => {
                         </FormItem>
                       )}
                     />
-                    
+
                     <div className="grid grid-cols-3 gap-4">
                       <FormField
                         control={paymentForm.control}
@@ -432,8 +431,8 @@ setTimeout(() => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Expiry Month</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
+                            <Select
+                              onValueChange={field.onChange}
                               defaultValue={field.value}
                             >
                               <FormControl>
@@ -443,8 +442,8 @@ setTimeout(() => {
                               </FormControl>
                               <SelectContent>
                                 {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                                  <SelectItem 
-                                    key={month} 
+                                  <SelectItem
+                                    key={month}
                                     value={month.toString().padStart(2, '0')}
                                   >
                                     {month.toString().padStart(2, '0')}
@@ -456,15 +455,15 @@ setTimeout(() => {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={paymentForm.control}
                         name="expiryYear"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Expiry Year</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
+                            <Select
+                              onValueChange={field.onChange}
                               defaultValue={field.value}
                             >
                               <FormControl>
@@ -474,8 +473,8 @@ setTimeout(() => {
                               </FormControl>
                               <SelectContent>
                                 {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
-                                  <SelectItem 
-                                    key={year} 
+                                  <SelectItem
+                                    key={year}
                                     value={year.toString().slice(-2)}
                                   >
                                     {year}
@@ -487,7 +486,7 @@ setTimeout(() => {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={paymentForm.control}
                         name="cvv"
@@ -495,11 +494,11 @@ setTimeout(() => {
                           <FormItem>
                             <FormLabel>CVV</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="password" 
-                                placeholder="123" 
+                              <Input
+                                type="password"
+                                placeholder="123"
                                 {...field}
-                                maxLength={3} 
+                                maxLength={3}
                               />
                             </FormControl>
                             <FormMessage />
@@ -507,13 +506,13 @@ setTimeout(() => {
                         )}
                       />
                     </div>
-                    
+
                     <div className="flex gap-4 pt-4">
                       <Button type="button" variant="outline" onClick={() => setCurrentStep(1)}>
                         Back to Passengers
                       </Button>
-                      <Button type="submit" className="flex-1" disabled={isLoading}>
-                        {isLoading ? (
+                      <Button type="submit" className="flex-1" disabled={isFormLoading}>
+                        {isFormLoading ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Processing...
@@ -532,7 +531,7 @@ setTimeout(() => {
             </Card>
           )}
         </div>
-        
+
         {/* Booking Summary */}
         <Card>
           <CardHeader>
@@ -543,43 +542,43 @@ setTimeout(() => {
               <div>
                 <h3 className="font-medium">Flight Details</h3>
                 <div className="text-sm space-y-1 mt-2">
-                  <p><span className="text-muted-foreground">Airline:</span> {flight.airlineName}</p>
-                  <p><span className="text-muted-foreground">Flight:</span> {flight.flightNumber}</p>
+                  <p><span className="text-muted-foreground">Airline:</span> {flight?.airlineName}</p>
+                  <p><span className="text-muted-foreground">Flight:</span> {flight?.flightNumber}</p>
                   <p>
-                    <span className="text-muted-foreground">Date:</span> {format(new Date(flight.departureTime), "MMM d, yyyy")}
+                    <span className="text-muted-foreground">Date:</span> {flight ? format(new Date(flight.departureTime), "MMM d, yyyy") : 'N/A'}
                   </p>
                   <p>
-                    <span className="text-muted-foreground">Time:</span> {format(new Date(flight.departureTime), "HH:mm")} - {format(new Date(flight.arrivalTime), "HH:mm")}
+                    <span className="text-muted-foreground">Time:</span> {flight ? format(new Date(flight.departureTime), "HH:mm") : 'N/A'} - {flight ? format(new Date(flight.arrivalTime), "HH:mm") : 'N/A'}
                   </p>
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div>
                 <h3 className="font-medium">Route</h3>
                 <div className="text-sm space-y-1 mt-2">
-                  <p><span className="text-muted-foreground">From:</span> {flight.fromAirport}</p>
-                  <p><span className="text-muted-foreground">To:</span> {flight.toAirport}</p>
+                  <p><span className="text-muted-foreground">From:</span> {flight?.fromAirport}</p>
+                  <p><span className="text-muted-foreground">To:</span> {flight?.toAirport}</p>
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div>
                 <h3 className="font-medium">Passengers</h3>
                 <p className="text-sm mt-2">
                   {passengers.length} of {numberOfTickets} added
                 </p>
               </div>
-              
+
               <Separator />
-              
+
               <div>
                 <h3 className="font-medium">Price Details</h3>
                 <div className="space-y-2 mt-2">
                   <div className="flex justify-between text-sm">
-                    <span>Base Fare ({numberOfTickets} × ₹{flight.baseFare})</span>
+                    <span>Base Fare ({numberOfTickets} × ₹{flight?.baseFare})</span>
                     <span>₹{calculateTotalFare()}</span>
                   </div>
                   <div className="flex justify-between text-sm">

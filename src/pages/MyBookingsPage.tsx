@@ -11,64 +11,47 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Calendar, Clock, ArrowRight, Search } from 'lucide-react';
 import { format } from 'date-fns';
+import api from '@/lib/axiosApi';
+import { useAppSelector } from '../store/store';
+import { Ticket } from '@/types';
 
-const MOCK_BOOKINGS = [
-  {
-    bookingId: "BK123456",
-    customerId: 1,
-    flightId: 1,
-    flightNumber: "AI101",
-    fromAirport: "DEL",
-    toAirport: "BOM",
-    departureTime: "2023-08-15T08:00:00",
-    arrivalTime: "2023-08-15T10:00:00",
-    bookingStatus: "CONFIRMED",
-    bookingDate: "2023-08-01T12:30:45",
-    totalPassengers: 2,
-    totalFare: 7000,
-    passengers: [
-      { firstName: "John", lastName: "Doe", age: 35, gender: "Male", seatPreference: "Window" },
-      { firstName: "Jane", lastName: "Doe", age: 32, gender: "Female", seatPreference: "Aisle" }
-    ]
-  },
-  {
-    bookingId: "BK789012",
-    customerId: 1,
-    flightId: 2,
-    flightNumber: "UK203",
-    fromAirport: "BOM",
-    toAirport: "DEL",
-    departureTime: "2023-08-20T16:30:00",
-    arrivalTime: "2023-08-20T18:45:00",
-    bookingStatus: "CONFIRMED",
-    bookingDate: "2023-08-05T09:15:22",
-    totalPassengers: 1,
-    totalFare: 4200,
-    passengers: [
-      { firstName: "John", lastName: "Doe", age: 35, gender: "Male", seatPreference: "Window" }
-    ]
-  }
-];
 
 const MyBookingsPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [bookings, setBookings] = useState(MOCK_BOOKINGS);
+  const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const { customer } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    setTimeout(() => {
-      setBookings(MOCK_BOOKINGS);
-      setIsLoading(false);
-    }, 1000);
-  }, [navigate]);
+    const fetchBookings = async () => {
+      if (!customer?.customerId) {
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const response = await api.get(`/api/tickets/customer/${customer.customerId}`);
+        setBookings(response.data);
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchBookings();
+  }, [customer?.customerId]);
 
-  const handleViewDetails = (booking) => {
-    setSelectedBooking(booking);
+  const handleViewDetails = async (bookingId: string) => {
+    try {
+      const response = await api.get(`/api/tickets/bookings/${bookingId}`);
+      setSelectedBooking(response.data);
+    } catch (error) {
+      console.error("Error fetching booking details:", error);
+    }
   };
 
   const getStatusColor = (status) => {
-    switch (status.toUpperCase()) {
+    switch (status?.toUpperCase()) {
       case 'CONFIRMED': return 'default';
       case 'PENDING': return 'outline';
       case 'CANCELLED': return 'destructive';
@@ -152,7 +135,7 @@ const MyBookingsPage = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleViewDetails(booking)}
+                              onClick={() => handleViewDetails(booking.bookingId)}
                               className="hover:text-blue-600"
                             >
                               View
