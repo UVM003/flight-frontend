@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { format } from 'date-fns';
-import { toast } from 'sonner';
-import { TicketCancellationService } from '@/lib/api';
-import { differenceInCalendarDays } from 'date-fns';
-
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import { TicketCancellationService } from "@/lib/api";
+import { differenceInCalendarDays } from "date-fns";
 
 import {
   Card,
@@ -12,28 +11,28 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Loader2,AlertTriangle, XCircle, CheckCircle, MailWarning, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { string } from 'zod';
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  ArrowLeft,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface BookingTicketDetails {
-  ticketId:number;
+  ticketId: number;
   bookingId: string;
   bookingDate: string;
-  customerId:number;
-  flightId:number;
+  customerId: number;
+  flightId: number;
   journeyDate: string;
-  seatCount:number;
-  status:string;
+  seatCount: number;
+  status: string;
   totalFare: number;
 }
 
@@ -51,7 +50,7 @@ enum VerificationStatus {
   IDLE,
   REQUESTED,
   VERIFIED,
-  FAILED
+  FAILED,
 }
 
 interface BackendError {
@@ -59,20 +58,21 @@ interface BackendError {
   message: string;
   details: string;
   httpCodeMessage: string;
+  error?: string;
 }
 
 // Type guard to check if an object is BackendError
 function isBackendError(obj: any): obj is BackendError {
   return (
     obj &&
-    typeof obj === 'object' &&
-    'httpCodeMessage' in obj &&
-    'message' in obj &&
-    'timestamp' in obj &&
-    'details' in obj
+    typeof obj === "object" &&
+    (("httpCodeMessage" in obj &&
+      "message" in obj &&
+      "timestamp" in obj &&
+      "details" in obj) ||
+      "error" in obj)
   );
 }
-
 
 const TicketCancellationPage = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -80,48 +80,51 @@ const TicketCancellationPage = () => {
   const { state } = useLocation();
   const { fromAirport, toAirport, bookingDate } = state || {};
 
-
-
   const [isLoading, setIsLoading] = useState(true);
-  const [ticketDetails, setTicketDetails] = useState<BookingTicketDetails | null>(null);
-  const [cancelResponse, setCancelResponse] = useState<CancellationTicketDetails | null>(null);
-  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>(VerificationStatus.IDLE);
-  const [otp, setOtp] = useState<string>('');
+  const [ticketDetails, setTicketDetails] =
+    useState<BookingTicketDetails | null>(null);
+  const [cancelResponse, setCancelResponse] =
+    useState<CancellationTicketDetails | null>(null);
+  const [verificationStatus, setVerificationStatus] =
+    useState<VerificationStatus>(VerificationStatus.IDLE);
+  const [otp, setOtp] = useState<string>("");
   const [isRequestingOtp, setIsRequestingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [successMessage, setSuccessMessage] = useState<string>("");
 
   // Get the current date for OTP verification
-  const currentDate = new Date().toISOString().split('T')[0]; // format: YYYY-MM-DD
+  const currentDate = new Date().toISOString().split("T")[0]; // format: YYYY-MM-DD
 
   useEffect(() => {
     const fetchTicketDetails = async () => {
       setIsLoading(true);
-        // Use the security token if available from local storage
-        try{
-        const token = localStorage.getItem('authToken') || '';
-        const data = await TicketCancellationService.getTicketDetails(bookingId!, token);
-        let response:BookingTicketDetails;
-if(isBackendError(data)){
-  console.error("Error message:", data);
-   setErrorMessage('Failed to load ticket details. Please try again.');
-      toast.error(data.message);
-}else{
-  // This is a valid JSON object of type YourDataType
-   response=data as BookingTicketDetails;
-  console.log("Valid data:", response);
-  setTicketDetails(response);
-  setErrorMessage('');
-}
-        }catch(error){
-console.error("Error message:", error);
-   setErrorMessage('Failed to load ticket details. Please try again.');
-      toast.error(error);
+      // Use the security token if available from local storage
+      try {
+        const token = localStorage.getItem("authToken") || "";
+        const data = await TicketCancellationService.getTicketDetails(
+          bookingId!,
+          token
+        );
+        let response: BookingTicketDetails;
+        if (isBackendError(data)) {
+          console.error("Error message:", data);
+          setErrorMessage("Failed to load ticket details. Please try again.");
+          toast.error(data?.error ?? data?.message ?? data?.error);
+        } else {
+          // This is a valid JSON object of type YourDataType
+          response = data as BookingTicketDetails;
+          console.log("Valid data:", response);
+          setTicketDetails(response);
+          setErrorMessage("");
         }
-finally{
+      } catch (error) {
+        console.error("Error message:", error);
+        setErrorMessage("Failed to load ticket details. Please try again.");
+        toast.error(error);
+      } finally {
         setIsLoading(false);
-}
+      }
     };
 
     if (bookingId) {
@@ -129,68 +132,71 @@ finally{
     }
   }, [bookingId]);
 
-  
   const handleRequestOtp = async () => {
     setIsRequestingOtp(true);
-    setErrorMessage('');
-    setSuccessMessage('');
-    
+    setErrorMessage("");
+    setSuccessMessage("");
+
     try {
       // Use the security token if available from local storage
-      const token = localStorage.getItem('authToken') || '';
-      const response=await TicketCancellationService.requestOtp(token);
-      console.log( response);
-      if(isBackendError(response)){
-        console.error('Error requesting OTP' ,response);
-        setErrorMessage('Failed to send OTP. Please try again.');
-        toast.error('Error sending OTP');
-        
-      }else{
-
-      setVerificationStatus(VerificationStatus.REQUESTED);
-      setSuccessMessage('OTP sent successfully. Please check your registered email.');
-      toast.success('OTP sent successfully');
+      const token = localStorage.getItem("authToken") || "";
+      const response = await TicketCancellationService.requestOtp(token);
+      console.log(response);
+      if (isBackendError(response)) {
+        console.error("Error requesting OTP", response);
+        setErrorMessage("Failed to send OTP. Please try again.");
+        toast.error("Error sending OTP");
+      } else {
+        setVerificationStatus(VerificationStatus.REQUESTED);
+        setSuccessMessage(
+          "OTP sent successfully. Please check your registered email."
+        );
+        toast.success("OTP sent successfully");
       }
     } catch (error) {
-      console.error('Error requesting OTP:', error);
-      setErrorMessage('Failed to send OTP. Please try again.');
-      toast.error('Error sending OTP');
-    }
-    finally {
+      console.error("Error requesting OTP:", error);
+      setErrorMessage("Failed to send OTP. Please try again.");
+      toast.error("Error sending OTP");
+    } finally {
       setIsRequestingOtp(false);
     }
   };
 
   const handleVerifyOtp = async () => {
-    if (!otp || otp.trim() === '') {
-      setErrorMessage('Please enter a valid OTP');
+    if (!otp || otp.trim() === "") {
+      setErrorMessage("Please enter a valid OTP");
       return;
     }
-    
+
     setIsVerifyingOtp(true);
-    setErrorMessage('');
-    setSuccessMessage('');
-    
-    // try {
-      // Use the security token if available from local storage
-      const token = localStorage.getItem('authToken') || '';
-      const data = await TicketCancellationService.verifyOtp(bookingId!, otp, currentDate, token);
-      let response:CancellationTicketDetails;
-if(typeof data==="string"){
-  console.error("Error message:", data);
-   setErrorMessage('OTP verification failed. Please check the OTP and try again.');
-      toast.error(data);
-}else{
-  // This is a valid JSON object of type YourDataType
-   response=data as CancellationTicketDetails;
-  console.log("Valid data:", response);
-  setSuccessMessage(response.message);
-  toast.success('Ticket cancelled successfully');
-  setErrorMessage('');
-}
+    setErrorMessage("");
+    setSuccessMessage("");
 
+    // Use the security token if available from local storage
+    const token = localStorage.getItem("authToken") || "";
+    const data = await TicketCancellationService.verifyOtp(
+      bookingId!,
+      otp,
+      currentDate,
+      token
+    );
+    let response: CancellationTicketDetails;
+    if (typeof data === "string" || isBackendError(data)) {
+      console.error("Error message:", data);
+      setErrorMessage(
+        "OTP verification failed. Please check the OTP and try again."
+      );
+      toast.error(typeof data === "string" ? data : data.message);
+    } else {
+      // This is a valid JSON object of type YourDataType
+      response = data as CancellationTicketDetails;
+      console.log("Valid data:", response);
+      setSuccessMessage(response.message);
+      toast.success("Ticket cancelled successfully");
+      setErrorMessage("");
+    }
 
-      setIsVerifyingOtp(false);
+    setIsVerifyingOtp(false);
   };
 
   if (isLoading) {
@@ -204,46 +210,47 @@ if(typeof data==="string"){
     );
   }
 
-const today = new Date();
-const journeyDate = new Date(ticketDetails?.journeyDate);
-const daysBeforeBooking = differenceInCalendarDays(journeyDate, today);
+  const today = new Date();
+  const journeyDate = new Date(ticketDetails?.journeyDate);
+  const daysBeforeBooking = differenceInCalendarDays(journeyDate, today);
 
-let cancellationRate = 0;
-if (daysBeforeBooking > 10) {
-  cancellationRate = 0.10;
-} else if (daysBeforeBooking > 5) {
-  cancellationRate = 0.20;
-} else if (daysBeforeBooking > 1) {
-  cancellationRate = 0.50;
-} else {
-  cancellationRate = 1.00;
-}
+  let cancellationRate = 0;
+  if (daysBeforeBooking > 10) {
+    cancellationRate = 0.1;
+  } else if (daysBeforeBooking > 5) {
+    cancellationRate = 0.2;
+  } else if (daysBeforeBooking > 1) {
+    cancellationRate = 0.5;
+  } else {
+    cancellationRate = 1.0;
+  }
 
-const totalFare = ticketDetails?.totalFare ?? 0;
-const cancellationCharge = Math.round(totalFare * cancellationRate);
-const refundAmount = Math.max(totalFare - cancellationCharge, 0);
+  const totalFare = ticketDetails?.totalFare ?? 0;
+  const cancellationCharge = Math.round(totalFare * cancellationRate);
+  const refundAmount = Math.max(totalFare - cancellationCharge, 0);
 
-const displayedTotalFare = totalFare;
-const cancellationChargeDisplay = `₹${cancellationCharge}`;
-const refundAmountDisplay = `₹${refundAmount}`;
+  const displayedTotalFare = totalFare;
+  const cancellationChargeDisplay = `₹${cancellationCharge}`;
+  const refundAmountDisplay = `₹${refundAmount}`;
 
   return (
     <div className="container py-8">
-      <Button 
-        variant="ghost" 
+      <Button
+        variant="ghost"
         className="mb-4 flex items-center"
-        onClick={() => navigate('/bookings')}
+        onClick={() => navigate("/bookings")}
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to My Bookings
       </Button>
-      
-      <h1 className="text-3xl font-bold mb-2">Ticket Cancellation</h1>
-      <p className="text-muted-foreground mb-6">Review and confirm your ticket cancellation</p>
 
-     
+      <h1 className="text-3xl font-bold mb-2">Ticket Cancellation</h1>
+      <p className="text-muted-foreground mb-6">
+        Review and confirm your ticket cancellation
+      </p>
+
       {/* Show error alert if an error exists */}
-    {errorMessage && (
+      {errorMessage && (
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -264,7 +271,10 @@ const refundAmountDisplay = `₹${refundAmount}`;
           <Card>
             <CardHeader>
               <CardTitle>Booking Details</CardTitle>
-              <CardDescription>Booking ID: {ticketDetails?.bookingId  ?? cancelResponse?.bookingId ?? 'N/A'}</CardDescription>
+              <CardDescription>
+                Booking ID:{" "}
+                {ticketDetails?.bookingId ?? cancelResponse?.bookingId ?? "N/A"}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Booking Details */}
@@ -272,47 +282,68 @@ const refundAmountDisplay = `₹${refundAmount}`;
                 <div>
                   <p className="text-sm text-muted-foreground">Booking Date</p>
                   <p className="font-medium">
-                    {bookingDate ? format(new Date(bookingDate), "MMM d, yyyy") : 'N/A'}
+                    {bookingDate
+                      ? format(new Date(bookingDate), "MMM d, yyyy")
+                      : "N/A"}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Journey Date</p>
                   <p className="font-medium">
-                    {cancelResponse?.journeyDate || ticketDetails?.journeyDate ? format(new Date(ticketDetails.journeyDate), "MMM d, yyyy") : 'N/A'}
+                    {cancelResponse?.journeyDate || ticketDetails?.journeyDate
+                      ? format(
+                          new Date(ticketDetails.journeyDate),
+                          "MMM d, yyyy"
+                        )
+                      : "N/A"}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">From</p>
-                  <p className="font-medium">{fromAirport}</p>
-                  
+                  <p className="font-medium">
+                    {fromAirport ? fromAirport : "N/A"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">To</p>
-                  <p className="font-medium">{toAirport}</p>
+                  <p className="font-medium">{toAirport ? toAirport : "N/A"}</p>
                 </div>
               </div>
 
               {/* Payment Details */}
               <div className="pt-4 border-t">
-                <h3 className="font-semibold text-lg mb-4">Payment & Refund Details</h3>
+                <h3 className="font-semibold text-lg mb-4">
+                  Payment & Refund Details
+                </h3>
                 <div className="bg-muted/30 p-4 rounded-md">
                   <div className="flex justify-between mb-2">
                     <span className="text-muted-foreground">Total Fare</span>
                     <span>₹{displayedTotalFare}</span>
                   </div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-muted-foreground">Cancellation Charge</span>
-                    <span className="text-destructive">{cancellationChargeDisplay}</span>
+                    <span className="text-muted-foreground">
+                      Cancellation Charge
+                    </span>
+                    <span className="text-destructive">
+                      {cancellationChargeDisplay}
+                    </span>
                   </div>
                   <div className="flex justify-between pt-2 border-t mt-2 font-medium">
                     <span>Refund Amount</span>
-                    <span className="text-green-600">{refundAmountDisplay}</span>
+                    <span className="text-green-600">
+                      {refundAmountDisplay}
+                    </span>
                   </div>
                 </div>
                 {cancelResponse && (
                   <div className="mt-4 text-sm">
-                    <p><strong>Refund Status:</strong> {cancelResponse.refundStatus}</p>
-                    <p className="mt-2"><strong>Message:</strong> {cancelResponse.message}</p>
+                    <p>
+                      <strong>Refund Status:</strong>{" "}
+                      {cancelResponse.refundStatus}
+                    </p>
+                    <p className="mt-2">
+                      <strong>Message:</strong> {cancelResponse.message}
+                    </p>
                   </div>
                 )}
               </div>
@@ -322,7 +353,7 @@ const refundAmountDisplay = `₹${refundAmount}`;
                 <div className="w-full flex justify-center">
                   <Button
                     className="w-full max-w-md"
-                    onClick={() => navigate('/bookings')}
+                    onClick={() => navigate("/bookings")}
                   >
                     Return to My Bookings
                   </Button>
@@ -339,9 +370,9 @@ const refundAmountDisplay = `₹${refundAmount}`;
                         className="flex-1"
                         maxLength={6}
                       />
-                      <Button 
-                        onClick={handleVerifyOtp} 
-                        disabled={isVerifyingOtp || !otp || otp.length<6}
+                      <Button
+                        onClick={handleVerifyOtp}
+                        disabled={isVerifyingOtp || !otp || otp.length < 6}
                         className="md:w-1/3"
                       >
                         {isVerifyingOtp ? (
@@ -350,31 +381,30 @@ const refundAmountDisplay = `₹${refundAmount}`;
                             Verifying
                           </>
                         ) : (
-                          'Verify OTP'
+                          "Verify OTP"
                         )}
                       </Button>
                       {/* Resend OTP Button */}
-    <Button
-      variant="outline"
-      onClick={handleRequestOtp}
-      disabled={isRequestingOtp}
-      className="w-full md:w-auto"
-    >
-      {isRequestingOtp ? (
-        <>
-          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          Resending OTP
-        </>
-      ) : (
-        'Resend OTP'
-      )}
-    </Button>
+                      <Button
+                        variant="outline"
+                        onClick={handleRequestOtp}
+                        disabled={isRequestingOtp}
+                        className="w-full md:w-auto"
+                      >
+                        {isRequestingOtp ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Resending OTP
+                          </>
+                        ) : (
+                          "Resend OTP"
+                        )}
+                      </Button>
                     </div>
-                    
                   )}
                   {verificationStatus === VerificationStatus.IDLE && (
-                    <Button 
-                      onClick={handleRequestOtp} 
+                    <Button
+                      onClick={handleRequestOtp}
                       disabled={isRequestingOtp}
                       className="w-full"
                     >
@@ -384,7 +414,7 @@ const refundAmountDisplay = `₹${refundAmount}`;
                           Sending OTP
                         </>
                       ) : (
-                        'Send OTP to Confirm Cancellation'
+                        "Send OTP to Confirm Cancellation"
                       )}
                     </Button>
                   )}
@@ -402,19 +432,25 @@ const refundAmountDisplay = `₹${refundAmount}`;
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Badge className="mb-2" variant="outline">Before 10+ days</Badge>
+                <Badge className="mb-2" variant="outline">
+                  Before 10+ days
+                </Badge>
                 <p className="text-sm">
                   10% of the total fare will be deducted.
                 </p>
               </div>
               <div>
-                <Badge className="mb-2" variant="outline">Before 5-9 days</Badge>
+                <Badge className="mb-2" variant="outline">
+                  Before 5-9 days
+                </Badge>
                 <p className="text-sm">
                   20% of the total fare will be deducted.
                 </p>
               </div>
               <div>
-                <Badge className="mb-2" variant="outline">Before 1-4 days</Badge>
+                <Badge className="mb-2" variant="outline">
+                  Before 1-4 days
+                </Badge>
                 <p className="text-sm">
                   50% of the total fare will be deducted.
                 </p>
@@ -425,7 +461,8 @@ const refundAmountDisplay = `₹${refundAmount}`;
                   {/* {cancelResponse.message} */}
                 </p>
                 <p className="mt-2">
-                  * Cancellation charges are calculated based on the date of journey.
+                  * Cancellation charges are calculated based on the date of
+                  journey.
                 </p>
               </div>
             </CardContent>

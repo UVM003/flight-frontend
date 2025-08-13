@@ -14,9 +14,9 @@ import { format } from 'date-fns';
 
 const MOCK_BOOKINGS = [
   {
-    bookingId: "AI101250813BO41",
-    customerId: 1,
-    flightId: 2,
+    bookingId: "AI101250813HM5U",
+    customerId: 3,
+    flightId: 1,
     flightNumber: "AI101",
     fromAirport: "DEL",
     toAirport: "BOM",
