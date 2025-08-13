@@ -19,6 +19,7 @@ import { useEffect, useState } from 'react';
 import AddFlightPage from './pages/AddFlightPage.tsx';
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "./store/authSlice";
+import TicketCancellationPage from './pages/TicketCancellationPage.tsx';
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => {
               <Route path="/update/:flightId" element={<UpdateFlightPage />} />
               <Route path="/booking-success" element={<BookingSuccessPage />} />
               <Route path="/bookings" element={<MyBookingsPage />} />
+              <Route path="/ticket-cancel/:bookingId" element={<TicketCancellationPage />} />
               <Route path="/addFlight" element={<AddFlightPage/>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

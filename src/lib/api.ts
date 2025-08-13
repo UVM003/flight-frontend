@@ -1,31 +1,84 @@
-const API_BASE_URL = 'https://your-api-base-url.com/api'; // Replace with your actual API URL
+const API_BASE_URL = 'http://localhost:8086'; 
 
-export async function get<T>(endpoint: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+
+export async function get<T>(endpoint: string, headers = {}): Promise<T | String> {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, { 
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
+      ...headers,
     },
   });
-  if (!response.ok) {
-    throw new Error(`GET ${endpoint} failed: ${response.statusText}`);
+  const contentType = response.headers.get('content-type');
+  if (response.ok) {
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    } else {
+      // fallback: treat response as plain text
+      return response.text();
+    }
+  } else {
+    // error responses can also be JSON or text
+    if (contentType && contentType.includes('application/json')) {
+      const errorJson = await response.json();
+      return errorJson;
+    } else {
+      return response.text();
+    }
   }
-  return response.json();
 }
 
-export async function post<T, U>(endpoint: string, data: T): Promise<U> {
+export async function post<T, U>(endpoint: string, data: T, headers = {}): Promise<U | string> {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...headers,
     },
     body: JSON.stringify(data),
   });
-  if (!response.ok) {
-    throw new Error(`POST ${endpoint} failed: ${response.statusText}`);
+  const contentType = response.headers.get('content-type');
+
+  if (response.ok) {
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    } else {
+      // fallback: treat response as plain text
+      return response.text();
+    }
+  } else {
+    // error responses can also be JSON or text
+    if (contentType && contentType.includes('application/json')) {
+      const errorJson = await response.json();
+      return errorJson;
+    } else {
+      return response.text();
+    }
   }
-  return response.json();
 }
+// Ticket cancellation API service
+export const TicketCancellationService = {
+  // Get ticket details for cancellation
+  getTicketDetails: (bookingId: string, token: string) => 
+    get(`/api/tickets/${bookingId}`, {
+      Authorization: token ? `Bearer ${token}` : ''
+    }),
+
+  // Request OTP for cancellation 
+  requestOtp: (token: string) =>
+    post(`/api/ticketCancel/otp/request`,
+      {}, 
+      { Authorization: token ? `Bearer ${token}` : '' }
+    ),
+
+  // Verify OTP and process cancellation (POST request with params)
+  verifyOtp: (bookingId: string, otp: string, cancellationDate: string, token: string) =>
+    post(
+      `/api/ticketCancel/otp/${bookingId}/verify?cancellationDate=${cancellationDate}&otp=${otp}`,
+      {}, 
+      { Authorization: token ? `Bearer ${token}` : '' }
+    ),
+};
 
 export const AuthService = {
   login: (email: string, password: string) =>
@@ -36,3 +89,4 @@ export const AuthService = {
 
   // Add more auth-related methods here
 };
+
