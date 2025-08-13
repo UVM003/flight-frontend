@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2,AlertTriangle, XCircle, CheckCircle, MailWarning, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { string } from 'zod';
 
 interface BookingTicketDetails {
   ticketId:number;
@@ -53,7 +54,24 @@ enum VerificationStatus {
   FAILED
 }
 
+interface BackendError {
+  timestamp: string;
+  message: string;
+  details: string;
+  httpCodeMessage: string;
+}
 
+// Type guard to check if an object is BackendError
+function isBackendError(obj: any): obj is BackendError {
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    'httpCodeMessage' in obj &&
+    'message' in obj &&
+    'timestamp' in obj &&
+    'details' in obj
+  );
+}
 
 
 const TicketCancellationPage = () => {
@@ -80,21 +98,30 @@ const TicketCancellationPage = () => {
   useEffect(() => {
     const fetchTicketDetails = async () => {
       setIsLoading(true);
-      try {
         // Use the security token if available from local storage
+        try{
         const token = localStorage.getItem('authToken') || '';
-        const response = await TicketCancellationService.getTicketDetails(bookingId!, token) as BookingTicketDetails;
-        console.log(token, bookingId, response);
-        setTicketDetails(response);
-        setErrorMessage('');
-      } catch (error) {
-        setErrorMessage('Failed to load ticket details. Please try again.');
-        toast.error('Error loading ticket details');
-      } 
-      
-      finally {
+        const data = await TicketCancellationService.getTicketDetails(bookingId!, token);
+        let response:BookingTicketDetails;
+if(isBackendError(data)){
+  console.error("Error message:", data);
+   setErrorMessage('Failed to load ticket details. Please try again.');
+      toast.error(data.message);
+}else{
+  // This is a valid JSON object of type YourDataType
+   response=data as BookingTicketDetails;
+  console.log("Valid data:", response);
+  setTicketDetails(response);
+  setErrorMessage('');
+}
+        }catch(error){
+console.error("Error message:", error);
+   setErrorMessage('Failed to load ticket details. Please try again.');
+      toast.error(error);
+        }
+finally{
         setIsLoading(false);
-      }
+}
     };
 
     if (bookingId) {
@@ -111,16 +138,23 @@ const TicketCancellationPage = () => {
     try {
       // Use the security token if available from local storage
       const token = localStorage.getItem('authToken') || '';
-      await TicketCancellationService.requestOtp(token);
-      
+      const response=await TicketCancellationService.requestOtp(token);
+      console.log( response);
+      if(isBackendError(response)){
+        console.error('Error requesting OTP' ,response);
+        setErrorMessage('Failed to send OTP. Please try again.');
+        toast.error('Error sending OTP');
+        
+      }else{
+
       setVerificationStatus(VerificationStatus.REQUESTED);
       setSuccessMessage('OTP sent successfully. Please check your registered email.');
       toast.success('OTP sent successfully');
+      }
     } catch (error) {
       console.error('Error requesting OTP:', error);
       setErrorMessage('Failed to send OTP. Please try again.');
       toast.error('Error sending OTP');
-    
     }
     finally {
       setIsRequestingOtp(false);
@@ -137,31 +171,26 @@ const TicketCancellationPage = () => {
     setErrorMessage('');
     setSuccessMessage('');
     
-    try {
+    // try {
       // Use the security token if available from local storage
       const token = localStorage.getItem('authToken') || '';
-      const response = await TicketCancellationService.verifyOtp(bookingId!, otp, currentDate, token) as CancellationTicketDetails;
-      
-      if (response && response.bookingId) {
-        setVerificationStatus(VerificationStatus.VERIFIED);
-        setSuccessMessage('Ticket cancellation successful! Your refund has been initiated.');
-        toast.success('Ticket cancelled successfully');
-      } else {
-        setVerificationStatus(VerificationStatus.FAILED);
-        setErrorMessage('OTP verification failed. Please check the OTP and try again.');
-        toast.error('OTP verification failed');
-      }
-    } catch (error) {
-      setVerificationStatus(VerificationStatus.FAILED);
-      setErrorMessage('Failed to verify OTP. Please try again.');
-      toast.error('Error verifying OTP');
-    } 
-   
+      const data = await TicketCancellationService.verifyOtp(bookingId!, otp, currentDate, token);
+      let response:CancellationTicketDetails;
+if(typeof data==="string"){
+  console.error("Error message:", data);
+   setErrorMessage('OTP verification failed. Please check the OTP and try again.');
+      toast.error(data);
+}else{
+  // This is a valid JSON object of type YourDataType
+   response=data as CancellationTicketDetails;
+  console.log("Valid data:", response);
+  setSuccessMessage(response.message);
+  toast.success('Ticket cancelled successfully');
+  setErrorMessage('');
+}
 
 
-    finally {
       setIsVerifyingOtp(false);
-    }
   };
 
   if (isLoading) {
@@ -174,12 +203,6 @@ const TicketCancellationPage = () => {
       </div>
     );
   }
-
-  //   // Display values prefer cancelResponse (post-cancellation) then ticketDetails
-  // const displayedTotalFare = cancelResponse?.totalFare ?? ticketDetails?.totalFare ?? 0;
-  // const cancellationChargeDisplay = cancelResponse ? `₹${cancelResponse.cancellationCharge}` : 'N/A';
-  // const refundAmountDisplay = cancelResponse ? `₹${cancelResponse.refundAmount}` : 'N/A';
-
 
 const today = new Date();
 const journeyDate = new Date(ticketDetails?.journeyDate);
@@ -399,6 +422,7 @@ const refundAmountDisplay = `₹${refundAmount}`;
               <div className="pt-4 border-t text-sm text-muted-foreground">
                 <p>
                   * Refund will be processed within 5-7 business days.
+                  {/* {cancelResponse.message} */}
                 </p>
                 <p className="mt-2">
                   * Cancellation charges are calculated based on the date of journey.
