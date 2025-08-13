@@ -17,7 +17,9 @@ import {
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AuthService } from '@/lib/api';
-
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "../store/authSlice";
+import api from '@/lib/axiosApi';
 // Form validation schema
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -31,7 +33,7 @@ const LoginPage = () => {
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  
+  const dispatch = useDispatch();
   // Get redirect path from location state, default to home
   const from = location.state?.redirectTo || '/';
   
@@ -43,26 +45,38 @@ const LoginPage = () => {
     },
   });
   
-  const onSubmit = (data: LoginFormValues) => {
-    setIsLoading(true);
-    setError(null);
-    
-    // setTimeout(() => {
-    //   if (data.email === 'admin@example.com' && data.password === 'admin123') {
-    //     AuthService.setToken('mock-jwt-token');
-    //     AuthService.setUserRole('ADMIN');
-    //     navigate(from);
-    //   } else if (data.email === 'user@example.com' && data.password === 'user123') {
-    //     AuthService.setToken('mock-jwt-token');
-    //     AuthService.setUserRole('CUSTOMER');
-    //     navigate(from);
-    //   } else {
-    //     setError('Invalid email or password. Please try again.');
-    //   }
-    //   setIsLoading(false);
-    // }, 1000);
-  };
+const onSubmit = async (data: LoginFormValues) => {
+  setIsLoading(true);
+  setError(null);
 
+  try {
+    // Call backend
+    const response = await api.post("/api/auth/customers/login", {
+      email: data.email,
+      password: data.password,
+    });
+
+    // Assuming backend returns { token, customer: { username, role, email, ... } }
+    console.log("Login response:", response.data);
+    const   customer  = response.data;
+    
+
+    // Save in Redux
+    dispatch(loginSuccess({ token: customer.token, customer }));
+
+    // Persist in localStorage
+    localStorage.setItem("token", customer.token);
+    localStorage.setItem("customer", JSON.stringify(customer));
+
+    // Redirect user
+    navigate(from);
+  } catch (err) {
+    console.error("Login error:", err);
+    setError("Invalid email or password. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center"
@@ -168,7 +182,7 @@ const LoginPage = () => {
             <p><strong>Regular User:</strong> user@example.com / user123</p>
           </div>
         </div>
-      </div>
+      </div> 
     </div>
   );
 };
