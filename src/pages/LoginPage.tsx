@@ -33,6 +33,8 @@ const LoginPage = () => {
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+   const [isLoggedIn, setIsLoggedIn] = useState(false);
+   const [forgotEmail, setForgotEmail] = useState("");
   const dispatch = useDispatch();
   // Get redirect path from location state, default to home
   const from = location.state?.redirectTo || '/';
@@ -174,14 +176,7 @@ const onSubmit = async (data: LoginFormValues) => {
           </CardFooter>
         </Card>
         
-        {/* Demo credentials hint */}
-        <div className="mt-6 p-4 border rounded-md bg-muted/40">
-          <h3 className="font-medium mb-2">Demo Credentials</h3>
-          <div className="space-y-1 text-sm">
-            <p><strong>Admin User:</strong> admin@example.com / admin123</p>
-            <p><strong>Regular User:</strong> user@example.com / user123</p>
-          </div>
-        </div>
+    
       </div> 
     </div>
   );
