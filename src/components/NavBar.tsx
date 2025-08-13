@@ -1,13 +1,27 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { LogOut, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAppSelector } from "../store/store";
+import { useDispatch } from 'react-redux';
+import { logout } from '@/store/authSlice';
 const NavBar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { customer, isAuthenticated } = useAppSelector((state) => state.auth);
+const dispatch = useDispatch();
+  const handleLogout = () => {
+  // Clear tokens
+  localStorage.removeItem("token");
+  sessionStorage.removeItem("token");
+
+  // Reset Redux state
+  dispatch(logout());
+
+ // Redirect
+  navigate("/login", { replace: true });
+};
   return (
     <nav className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -29,13 +43,18 @@ const NavBar = () => {
           <Link to="/search" className="hover:text-primary">Search Flights</Link>
           {customer?.role === "CUSTOMER" && <Link to="/bookings" className="hover:text-primary">My Bookings</Link>}
           {customer?.role === "ADMIN" && <Link to="/addFlight" className="hover:text-primary">Add Flight</Link>}
-          <Link to="/profile" className="hover:text-primary">Profile</Link>
           {customer?.role == null ? (
             <>
               <Link to="/login" className="hover:text-primary">Login</Link>
              <Link to="/register" className="hover:text-primary">Register</Link>
            </>
-         ) : null}
+         ) :<>
+        <Link to="/profile" className="hover:text-primary">Profile</Link>
+         <Button  className="h-8 w-28" variant="destructive" onClick={handleLogout}>
+                        <LogOut className="mr-2 h-2 w-2" />
+                        Logout
+                      </Button>
+                      </>}
         </div>
 
         {/* Mobile menu button */}

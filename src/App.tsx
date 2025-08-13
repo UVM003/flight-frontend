@@ -20,6 +20,8 @@ import AddFlightPage from './pages/AddFlightPage.tsx';
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "./store/authSlice";
 import TicketCancellationPage from './pages/TicketCancellationPage.tsx';
+import EmailVerificationPage from './pages/EmailVerficationPage.tsx';
+import ResetPasswordPage from './pages/ResetPasswordPage.tsx';
 
 const queryClient = new QueryClient();
 
@@ -55,6 +57,10 @@ const App = () => {
               <Route path="/bookings" element={<MyBookingsPage />} />
               <Route path="/ticket-cancel/:bookingId" element={<TicketCancellationPage />} />
               <Route path="/addFlight" element={<AddFlightPage/>} />
+              <Route path="/verify-email" element={<EmailVerificationPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

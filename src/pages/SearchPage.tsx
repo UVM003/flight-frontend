@@ -136,9 +136,11 @@ const SearchPage = () => {
       );
       if (!response.ok) {
         const errorData = await response.json();
+        console.log("Error fetching flights:", errorData);
         throw new Error(errorData.error || "No available flights");
       }
       const data = await response.json();
+      console.log(data)
       setFlights(data);
       setCurrentPage(page);
     } catch (error: any) {
