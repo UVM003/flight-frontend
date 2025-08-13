@@ -73,6 +73,7 @@ export interface Customer {
   firstName: string;
   lastName: string;
   email: string;
+  gender: string;
   phoneNumber?: string;
   role: string;
   active: boolean;

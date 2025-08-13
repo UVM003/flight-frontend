@@ -1,38 +1,42 @@
-const API_BASE_URL = 'https://your-api-base-url.com/api'; // Replace with your actual API URL
+// src/services/api.ts
+import axios from "axios";
+const API_BASE_URL = "http://localhost:8086/api/auth/customers"; // change this to your backend base URL
 
-export async function get<T>(endpoint: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`GET ${endpoint} failed: ${response.statusText}`);
+const apiclient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Add Authorization token if exists
+apiclient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("authToken");
+  if (token) {
+    config.headers["Authorization"] = `Bearer ${token}`;
   }
-  return response.json();
-}
+  return config;
+});
+// api.interceptors.request.use(
+//   (config) => {
+//     const token = store.getState().auth.token; // read token directly from Redux
+//     if (token) {
+//       config.headers.Authorization = `Bearer ${token}`;
+//     }
+//     return config;
+//   },
+//   (error) => Promise.reject(error)
+// );
 
-export async function post<T, U>(endpoint: string, data: T): Promise<U> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error(`POST ${endpoint} failed: ${response.statusText}`);
-  }
-  return response.json();
-}
-
+// Common API calls
 export const AuthService = {
-  login: (email: string, password: string) =>
-    post<{ email: string; password: string }, { token: string }>('/auth/login', { email, password }),
+  login: async (email: string, password: string) => {
+    const response = await apiclient.post("/login", { email, password });
+    return response.data; // { token, role, ... }
+  },
 
-  register: (data: { firstName: string; lastName: string; email: string; password: string; phoneNumber: string }) =>
-    post<typeof data, { userId: string }>('/auth/register', data),
-
-  // Add more auth-related methods here
+ 
 };
+
+
+

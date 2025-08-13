@@ -5,15 +5,15 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import NavBar from './components/NavBar.tsx';
 import Footer from './components/Footer.tsx';
 import HomePage from './pages/HomePage.tsx';
-import SearchPage from './pages/SearchPage';
-import FlightDetailsPage from './pages/FlightDetailsPage';
+
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
-import BookingPage from './pages/BookingPage';
-import BookingSuccessPage from './pages/BookingSuccessPage';
-import MyBookingsPage from './pages/MyBookingsPage';
+
+
 import NotFound from './pages/NotFound';
+import EmailVerificationPage from './pages/EmailVerficationPage.tsx';
+import ResetPasswordPage from './pages/ResetPasswordPage.tsx';
 
 const queryClient = new QueryClient();
 
@@ -27,14 +27,15 @@ const App = () => (
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/search" element={<SearchPage />} />
-              <Route path="/flights/:flightId" element={<FlightDetailsPage />} />
+             
+             
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+               <Route path="/verify-email" element={<EmailVerificationPage />} />
               <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/booking/:flightId" element={<BookingPage />} />
-              <Route path="/booking-success" element={<BookingSuccessPage />} />
-              <Route path="/bookings" element={<MyBookingsPage />} />
+    
+              
+               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

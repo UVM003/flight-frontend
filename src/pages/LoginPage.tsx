@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -14,9 +14,21 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
 import { AuthService } from '@/lib/api';
+import axios from "axios";
+import ForgetPasswordForm from '@/components/user/ForgetPasswordForm';
+import PasswordInput from '@/components/user/PasswordInput';
+// Backend DTO type
+interface AuthResponseDTO {
+  success: boolean;
+  message: string;
+  token: string;
+  role: string;
+}
 
 // Form validation schema
 const loginSchema = z.object({
@@ -31,10 +43,14 @@ const LoginPage = () => {
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Get redirect path from location state, default to home
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [openForgot, setOpenForgot] = useState(false);
+const [forgotEmail, setForgotEmail] = useState("");
+const [otpLoading, setOtpLoading] = useState(false);
+const [otpError, setOtpError] = useState<string | null>(null);
+
   const from = location.state?.redirectTo || '/';
-  
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -42,30 +58,87 @@ const LoginPage = () => {
       password: '',
     },
   });
-  
-  const onSubmit = (data: LoginFormValues) => {
+
+  // Check login on mount
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    setIsLoggedIn(!!token);
+  }, []);
+
+  const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     setError(null);
-    
-    // In a real app, make an API call here
-    setTimeout(() => {
-      // Mock successful login
-      if (data.email === 'admin@example.com' && data.password === 'admin123') {
-        // Store token and role
-        AuthService.setToken('mock-jwt-token');
-        AuthService.setUserRole('ADMIN');
-        navigate(from);
-      } else if (data.email === 'user@example.com' && data.password === 'user123') {
-        // Store token and role
-        AuthService.setToken('mock-jwt-token');
-        AuthService.setUserRole('CUSTOMER');
+
+    try {
+      const resData = await AuthService.login(data.email, data.password) as AuthResponseDTO;
+
+      if (resData.success) {
+        localStorage.setItem('authToken', resData.token);
+        localStorage.setItem('userRole', resData.role);
+
+        setIsLoggedIn(true);
         navigate(from);
       } else {
-        setError('Invalid email or password. Please try again.');
+        setError(resData.message || 'Login failed. Please try again.');
       }
+    } catch (err: any) {
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Network error. Please check your connection.');
+      }
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userRole');
+    setIsLoggedIn(false);
+    navigate('/login'); // or wherever you want
+  };
+
+//forget password handle here
+const handleSendOtp = async () => {
+  if (!forgotEmail) {
+    setOtpError("Please enter your email address");
+    return;
+  }
+  setOtpLoading(true);
+  setOtpError(null);
+
+  try {
+    // Directly hit backend API
+    const res = await axios.post("http://localhost:8086/api/auth/forgotpassword", {
+      email: forgotEmail
+    });
+
+    if (res.data.success) {
+      setOpenForgot(false);
+      navigate("/reset-password", { state: { email: forgotEmail } });
+    } else {
+      setOtpError(res.data.message || "Failed to send OTP");
+    }
+  } catch (err: any) {
+    setOtpError(err.response?.data?.message || "Network error");
+  } finally {
+    setOtpLoading(false);
+  }
+};
+
+  if (isLoggedIn) {
+    return (
+      <div className="container max-w-lg py-10 text-center">
+        <Card className="shadow-md p-8">
+          <h2 className="text-2xl font-bold mb-4">You are already logged in</h2>
+          <Button onClick={handleLogout} className="w-full max-w-xs mx-auto">
+            Logout
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-lg py-10">
@@ -84,7 +157,7 @@ const LoginPage = () => {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -94,26 +167,8 @@ const LoginPage = () => {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="email@example.com" 
-                        {...field} 
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="******" 
+                      <Input
+                        placeholder="email@example.com"
                         {...field}
                         disabled={isLoading}
                       />
@@ -122,16 +177,18 @@ const LoginPage = () => {
                   </FormItem>
                 )}
               />
+              <PasswordInput
+          control={form.control}
+        name="password"
+     label="Password"
+      placeholder="******"
+      />
+
               <div className="text-right">
-                <Link 
-                  to="/forgot-password" 
-                  className="text-sm text-primary hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <Button 
-                type="submit" 
+                 <ForgetPasswordForm />
+                 </div>
+              <Button
+                type="submit"
                 className="w-full"
                 disabled={isLoading}
               >
@@ -149,8 +206,8 @@ const LoginPage = () => {
           <div className="text-center w-full">
             <p className="text-sm text-muted-foreground">
               Don't have an account?{" "}
-              <Link 
-                to="/register" 
+              <Link
+                to="/register"
                 className="text-primary hover:underline"
               >
                 Sign up
@@ -159,15 +216,6 @@ const LoginPage = () => {
           </div>
         </CardFooter>
       </Card>
-      
-      {/* Demo credentials hint */}
-      <div className="mt-6 p-4 border rounded-md bg-muted/40">
-        <h3 className="font-medium mb-2">Demo Credentials</h3>
-        <div className="space-y-1 text-sm">
-          <p><strong>Admin User:</strong> admin@example.com / admin123</p>
-          <p><strong>Regular User:</strong> user@example.com / user123</p>
-        </div>
-      </div>
     </div>
   );
 };

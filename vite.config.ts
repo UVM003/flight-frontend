@@ -11,6 +11,10 @@ export default defineConfig(({ mode }) => ({
     }),
     react(),
   ],
+  server: {
+    port: 5173, // change to the port you want
+    strictPort: true // ensures it fails instead of switching ports
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
