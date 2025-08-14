@@ -26,7 +26,7 @@ const [show, setShow] = useState(false);
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:8086/api/auth/customers/resetpassword", {
+      const res = await api.post("api/auth/customers/resetpassword", {
         email,
         otp,
         newPassword,
