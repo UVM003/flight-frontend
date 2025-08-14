@@ -91,9 +91,11 @@ const BookingPage = () => {
 
   // Fetch flight details from API when the page loads
   useEffect(() => {
+    console.log(flightId)
     const fetchFlightDetails = async () => {
       try {
         const response = await api.get(`/api/flights/${flightId}`);
+        console.log("flight fetched success",response.data)
         setFlight(response.data);
       } catch (error) {
         console.error("Error fetching flight details:", error);
@@ -114,51 +116,67 @@ const BookingPage = () => {
   };
 
   const onPaymentSubmit = async (data: PaymentFormValues) => {
-    setIsFormLoading(true);
+  console.log("attempting to book", data);
+  setIsFormLoading(true);
 
-    if (!flight || !customer) {
+  console.log("flight", flight);
+  console.log("customer", customer);
+  console.log("passengers", passengers);
+
+  if (!flight || !customer) {
+    toast.error("Booking failed. Missing flight or customer.");
+    setIsFormLoading(false);
+    return;
+  }
+
+  if (passengers.length === 0) {
+    toast.error("No passengers added.");
+    setIsFormLoading(false);
+    return;
+  }
+
+  try {
+    const passengerInfoDTOs = passengers.map(p => ({
+      fullName: `${p.firstName} ${p.lastName}`,
+      age: p.age,
+      gender: p.gender,
+      seatNumber: p.seatPreference || 'N/A',
+    }));
+
+    const bookingData = {
+      customerId: customer.customerId,
+      flightId: Number(flightId),
+      journeyDate: format(new Date(flight.departureTime), "yyyy-MM-dd"),
+      seatClass: seatClass,
+      passengers: passengerInfoDTOs,
+      paymentMode: 'Credit Card',
+    };
+
+    console.log('Booking payload:', bookingData); // 🧠 Important log!
+
+    const response = await api.post("/api/tickets/book", bookingData);
+    const bookingResponse = response.data;
+
+    toast.success("Booking successful!");
+
+    navigate('/booking-success', {
+      state: {
+        bookingId: bookingResponse.bookingId,
+        flightNumber: flight.flightNumber,
+      }
+    });
+  } catch (error: any) {
+    console.error("Booking failed:", error);
+    if (error.response) {
+      console.error("Error response:", error.response.data);
+      toast.error(`Booking failed: ${error.response.data?.message || "Something went wrong"}`);
+    } else {
       toast.error("Booking failed. Please try again.");
-      setIsFormLoading(false);
-      return;
     }
-
-    try {
-      const passengerInfoDTOs = passengers.map(p => ({
-        fullName: `${p.firstName} ${p.lastName}`,
-        age: p.age,
-        gender: p.gender,
-        seatNumber: p.seatPreference || 'N/A',
-      }));
-
-      const bookingData = {
-        customerId: customer.customerId,
-        flightId: Number(flightId),
-        journeyDate: format(new Date(flight.departureTime), "yyyy-MM-dd"),
-        seatClass: seatClass,
-        passengers: passengerInfoDTOs,
-        paymentMode: 'Credit Card',
-      };
-
-      console.log('Booking payload:', bookingData);
-
-      const response = await api.post("/api/tickets/book", bookingData);
-      const bookingResponse = response.data;
-
-      toast.success("Booking successful!");
-
-      navigate('/booking-success', {
-        state: {
-          bookingId: bookingResponse.bookingId,
-          flightNumber: flight.flightNumber,
-        }
-      });
-    } catch (error) {
-      console.error("Booking failed:", error);
-      toast.error("Booking failed. Please try again.");
-    } finally {
-      setIsFormLoading(false);
-    }
-  };
+  } finally {
+    setIsFormLoading(false);
+  }
+};
 
   const handleRemovePassenger = (index: number) => {
     const updatedPassengers = [...passengers];
