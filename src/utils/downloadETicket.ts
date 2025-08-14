@@ -1,12 +1,33 @@
 import jsPDF from "jspdf";
-import airlineLogo from "/logo_transparent.png"; 
+import airlineLogo from "/logo_transparent.png";
 import { format } from "date-fns";
 
-// INR formatting without ₹
-const formatCurrency = (value) =>
+interface Passenger {
+  fullName: string;
+  age: number;
+  gender: string;
+  seatNumber?: string;
+}
+
+interface Booking {
+  bookingId: string;
+  flightNumber: string;
+  journeyDate: string; // ISO string or "yyyy-MM-dd"
+  departureTime: string; // ISO string
+  arrivalTime: string; // ISO string
+  fromAirport: string;
+  toAirport: string;
+  totalFare: number;
+  totalPassengers: number;
+  bookingStatus: "CONFIRMED" | "CANCELLED" | string;
+  passengers: Passenger[];
+}
+
+// INR formatting helper
+const formatCurrency = (value: number): string =>
   `Rs. ${value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
 
-export const downloadETicket = (booking) => {
+export const downloadETicket = (booking: Booking) => {
   const doc = new jsPDF();
   let y = 0;
 
@@ -55,9 +76,8 @@ export const downloadETicket = (booking) => {
     doc.text(format(new Date(booking.journeyDate + "T00:00:00"), "MMM d, yyyy"), 60, y + 28);
     doc.text(formatCurrency(booking.totalFare), 60, y + 38);
 
-    const assignedSeats = booking.passengers.map((p) => p.seatNumber || "N/A").join(", ");
+    const assignedSeats = booking.passengers.map(p => p.seatNumber || "N/A").join(", ");
     doc.text(assignedSeats, 60, y + 48);
-
     y += 65;
 
     // ===== Flight Information =====
@@ -99,7 +119,7 @@ export const downloadETicket = (booking) => {
 
     // Draw passenger rows
     doc.setFont("times", "normal");
-    booking.passengers.forEach((p) => {
+    booking.passengers.forEach(p => {
       // Page break check
       if (y + 8 > 280) {
         doc.addPage();
@@ -152,17 +172,12 @@ export const downloadETicket = (booking) => {
 
     doc.setFont("times", "normal");
     doc.text("Thank you for choosing our service.", 10, y);
-
   } else if (booking.bookingStatus === "CANCELLED") {
     doc.setFont("times", "bold");
     doc.text("Dear Customer,", 10, y);
     y += 10;
     doc.setFont("times", "normal");
-    doc.text(
-      `Your ticket with booking ID ${booking.bookingId} has been cancelled successfully.`,
-      10,
-      y
-    );
+    doc.text(`Your ticket with booking ID ${booking.bookingId} has been cancelled successfully.`, 10, y);
     y += 20;
     doc.text("Thank you.", 10, y);
   } else {
@@ -173,11 +188,7 @@ export const downloadETicket = (booking) => {
   // ===== Footer =====
   doc.setFontSize(10);
   doc.setTextColor(150);
-  doc.text(
-    "For support, contact: support@skyConnect.com | © SkyConnect Airlines",
-    10,
-    290
-  );
+  doc.text("For support, contact: support@skyConnect.com | © SkyConnect Airlines", 10, 290);
 
   // Save PDF
   doc.save(`E-Ticket_${booking.bookingId}.pdf`);
