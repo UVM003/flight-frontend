@@ -227,13 +227,8 @@ const FlightDetailsPage = () => {
         <CardFooter className="bg-muted/20 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-xl font-bold">Price: ₹{flight.baseFare}</div>
 
-          {/* Book Now button visible to everyone */}
-          <Button size="lg" onClick={handleBookNow} disabled={flight.availableSeats === 0}>
-            Book Now
-          </Button>
-
-          {/* Admin-only buttons */}
-          {customer?.role === "ADMIN" && (
+          
+          {customer?.role === "ADMIN" ? (
             <div className="md:flex md:gap-2">
               <Button size="lg" onClick={handleUpdateFlight} disabled={flight.availableSeats === 0}>
                 Update Details
@@ -242,7 +237,9 @@ const FlightDetailsPage = () => {
                 Delete Flight
               </Button>
             </div>
-          )}
+          ) : (<Button size="lg" onClick={handleBookNow} disabled={flight.availableSeats === 0}>
+            Book Now
+          </Button>)}
         </CardFooter>
       </Card>
 

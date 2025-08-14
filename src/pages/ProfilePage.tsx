@@ -38,6 +38,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from "sonner";
+
 // --- API Configuration ---
 // Make sure to fill in your API base URL here
 const PROFILE_API_URL = `/api/auth/customers/profile`;
@@ -176,7 +178,7 @@ useEffect(() => {
       const updatedCustomer = response.data;
       setCustomer(updatedCustomer);
       setUpdateSuccess(true);
-      setTimeout(() => setUpdateSuccess(false), 3000);
+      setTimeout(() => setUpdateSuccess(false), 1500);
     } catch (err: any) {
       setProfileError(err.response?.data?.message || 'Failed to update profile. Please try again.');
       console.error('API Error:', err);
@@ -207,7 +209,10 @@ useEffect(() => {
       );
       setPasswordSuccess(true);
       passwordForm.reset();
-      setTimeout(() => setPasswordSuccess(false), 3000);
+      setTimeout(() => setPasswordSuccess(false), 1500);
+        toast.success("Password changed successfully!", {
+         duration: 1500, // 2 seconds
+       });
        handleLogout();
     } catch (err: any) {
       console.error('Password change error:', err);
@@ -217,6 +222,9 @@ useEffect(() => {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       });
+        toast.error("Failed to change password.", {
+         duration: 1500,
+       });
       console.error('Request headers:', {
         Authorization: `Bearer ${localStorage.getItem('authToken')}`,
       });
@@ -250,10 +258,18 @@ const handleDeleteProfile = async () => {
       await api.delete(DELETE_API_URL, {
         data: { password: deletePassword },
       });
+        toast.success("Profile deleted successfully!", {
+         duration: 1500, // 2 seconds
+       });
       handleLogout();
     } catch (err: any) {
+      toast.error("Failed to delete profile. Please try again.", {
+         duration: 1500, // 2 seconds
+       });
+      console.error('Delete Profile Error:', err);
       setProfileError(err.response?.data?.message || 'Failed to delete profile. Please try again.');
       console.error('Delete Error:', err);
+
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);

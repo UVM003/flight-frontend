@@ -22,6 +22,7 @@ import { loginSuccess } from "./store/authSlice";
 import TicketCancellationPage from './pages/TicketCancellationPage.tsx';
 import EmailVerificationPage from './pages/EmailVerficationPage.tsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.tsx';
+import AddAdmin from './pages/AddAdmin.tsx';
 
 const queryClient = new QueryClient();
 
@@ -59,7 +60,7 @@ const App = () => {
               <Route path="/addFlight" element={<AddFlightPage/>} />
               <Route path="/verify-email" element={<EmailVerificationPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
-
+              <Route path="/add-admin" element={<AddAdmin />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
