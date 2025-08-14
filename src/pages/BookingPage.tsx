@@ -154,8 +154,10 @@ const BookingPage = () => {
 
     console.log('Booking payload:', bookingData); // 🧠 Important log!
 
-    const response = await api.post("/api/tickets/book", bookingData);
-    const bookingResponse = response.data;
+      const response = await api.post("/api/tickets/book", bookingData);
+      const bookingResponse = response.data;
+
+      console.log(bookingResponse)
 
     toast.success("Booking successful!");
 
