@@ -144,6 +144,8 @@ const BookingPage = () => {
       const response = await api.post("/api/tickets/book", bookingData);
       const bookingResponse = response.data;
 
+      console.log(bookingResponse)
+
       toast.success("Booking successful!");
 
       navigate('/booking-success', {
@@ -352,7 +354,7 @@ const BookingPage = () => {
                                 <FormLabel>Gender</FormLabel>
                                 <Select
                                   onValueChange={field.onChange}
-                                  defaultValue={field.value}
+                                  value={field.value}
                                 >
                                   <FormControl>
                                     <SelectTrigger>

@@ -23,42 +23,13 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-interface BookingTicketDetails {
-  ticketId: number;
-  bookingId: string;
-  bookingDate: string;
-  customerId: number;
-  flightId: number;
-  journeyDate: string;
-  seatCount: number;
-  status: string;
-  totalFare: number;
-}
-
-interface CancellationTicketDetails {
-  bookingId: string;
-  journeyDate: string;
-  totalFare: number;
-  cancellationCharge: number;
-  refundAmount: number;
-  refundStatus: string;
-  message: string;
-}
+import { BackendError, BookingTicketDetails, CancellationTicketDetails } from "@/types";
 
 enum VerificationStatus {
   IDLE,
   REQUESTED,
   VERIFIED,
   FAILED,
-}
-
-interface BackendError {
-  timestamp: string;
-  message: string;
-  details: string;
-  httpCodeMessage: string;
-  error?: string;
 }
 
 // Type guard to check if an object is BackendError

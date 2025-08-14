@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { downloadETicket } from "../utils/downloadETicket";
 import { 
   Card, 
   CardContent, 
@@ -20,31 +21,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Calendar, Clock, ArrowRight, Search } from 'lucide-react';
 import { format } from 'date-fns';
+import { TicketDetails } from '@/types';
 
-interface TicketDetails {
-  ticketId: number;
-  bookingId: string;
-  customerId: number;
-  flightId: number;
-  flightNumber: string;
-  fromAirport: string;
-  toAirport: string;
-  departureTime: string; 
-  arrivalTime: string;  
-  bookingStatus: string;
-  journeyDate: string;
-  bookingDate: string;   
-  totalPassengers: number;
-  totalFare: number;     
-  passengers: PassengerInfoDTO[];
-}
 
-interface PassengerInfoDTO {
-  fullName: string;
-  age: number;
-  gender: string;
-  seatNumber: string;
-}
 
 const MyBookingsPage = () => {
   const navigate = useNavigate();
@@ -55,48 +34,54 @@ const MyBookingsPage = () => {
   const [selectedBooking, setSelectedBooking] = useState(null); 
 
   const customerData = JSON.parse(localStorage.getItem("customer") || "{}");
-const tokenFromCustomer = customerData.token;
-console.log(tokenFromCustomer);
-const token = tokenFromCustomer;
-useEffect(() => {
-  fetch("http://localhost:8086/api/tickets/customer/myTickets", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-     .then((res) => res.json()) // Convert Response → JSON
-  .then((data) => {
-    setIsLoading(false);
-    console.log("Fetched data:", data);
-    // Make sure it's an array before mapping
-    if (Array.isArray(data)) {
-      console.log("Array")
-      setBookings(data);
-      console.log("bookings mapped",bookings);
-    } else {
-      console.error("Expected array but got:", data);
-    }
-  })}, [navigate,tokenFromCustomer]);
+  const tokenFromCustomer = customerData.token;
+  const token = tokenFromCustomer;
+  
+  useEffect(() => {
+    fetch("http://localhost:8086/api/tickets/customer/myTickets", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json()) // Convert Response → JSON
+      .then((data) => {
+        setIsLoading(false);
+        console.log("Fetched data:", data);
+        // Make sure it's an array before mapping
+        if (Array.isArray(data)) {
+          console.log("Array")
+          setBookings(data);
+          console.log("bookings mapped",bookings);
+        } else {
+          console.error("Expected array but got:", data);
+        }
+      })
+      .catch(error => {
+        setIsLoading(false);
+        console.error("Failed to fetch bookings:", error);
+      });
+  }, [navigate, tokenFromCustomer]);
 
-useEffect(() => {
-  console.log("Updated bookings:", bookings);
-}, [bookings]);
+  useEffect(() => {
+    console.log("Updated bookings:", bookings);
+  }, [bookings]);
+
   const handleViewDetails = (booking) => {
     setSelectedBooking(booking);
   };
 
   const getStatusColor = (status: string) => {
-  switch (status.toUpperCase()) {
-    case 'CONFIRMED':
-      return 'default';  // changed from 'success' to 'default'
-    case 'PENDING':
-      return 'outline';  // changed from 'warning' to 'outline' (or 'secondary')
-    case 'CANCELLED':
-      return 'destructive';
-    default:
-      return 'secondary';
-  }
-};
+    switch (status.toUpperCase()) {
+      case 'CONFIRMED':
+        return 'default';
+      case 'PENDING':
+        return 'outline';
+      case 'CANCELLED':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
+  };
 
   if (isLoading) {
     return (
@@ -147,32 +132,31 @@ useEffect(() => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-  {bookings.map((booking) => (
-    <TableRow key={booking.ticketId}>
-      <TableCell className="font-medium">{booking.bookingId}</TableCell>
-      <TableCell className="hidden sm:table-cell">{booking.flightId}</TableCell>
-      <TableCell className="hidden md:table-cell">
-        {format(new Date(booking.journeyDate + "T00:00:00"), "MMM d, yyyy")}
-      </TableCell>
-      <TableCell>
-        <Badge variant={getStatusColor(booking.bookingStatus)}>
-          {booking.bookingStatus}
-        </Badge>
-      </TableCell>
-      <TableCell className="text-right">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleViewDetails(booking)}
-          className="hover:text-blue-600"
-        >
-          View
-        </Button>
-      </TableCell>
-    </TableRow>
-  ))}
-</TableBody>
-
+                    {bookings.map((booking) => (
+                      <TableRow key={booking.ticketId}>
+                        <TableCell className="font-medium">{booking.bookingId}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{booking.flightNumber}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {format(new Date(booking.journeyDate + "T00:00:00"), "MMM d, yyyy")}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusColor(booking.bookingStatus)}>
+                            {booking.bookingStatus}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewDetails(booking)}
+                            className="hover:text-blue-600"
+                          >
+                            View
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
                 </Table>
               </CardContent>
             </Card>
@@ -227,7 +211,7 @@ useEffect(() => {
                           <TableHead>Name</TableHead>
                           <TableHead>Age</TableHead>
                           <TableHead>Gender</TableHead>
-                          <TableHead className="hidden sm:table-cell">Seat Preference</TableHead>
+                          <TableHead className="hidden sm:table-cell">Seat Number</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -236,7 +220,7 @@ useEffect(() => {
                             <TableCell>{passenger.fullName}</TableCell>
                             <TableCell>{passenger.age}</TableCell>
                             <TableCell>{passenger.gender}</TableCell>
-                            <TableCell className="hidden sm:table-cell">{passenger.seatPreference || "N/A"}</TableCell>
+                            <TableCell className="hidden sm:table-cell">{passenger.seatNumber || "N/A"}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -284,9 +268,11 @@ useEffect(() => {
                       >
                         Cancel Booking
                       </Button>
-
                     )}
-                    <Button>Download E-Ticket</Button>
+                    <Button 
+                      onClick={() => downloadETicket(selectedBooking)}>
+                      Download E-Ticket
+                    </Button>
                   </div>
                 </CardFooter>
               </Card>
