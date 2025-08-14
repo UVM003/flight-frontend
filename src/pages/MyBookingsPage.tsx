@@ -1,249 +1,277 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
-  Card, CardContent, CardDescription, CardFooter,
-  CardHeader, CardTitle 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter,
+  CardHeader, 
+  CardTitle 
 } from '@/components/ui/card';
 import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Calendar, Clock, ArrowRight, Search } from 'lucide-react';
 import { format } from 'date-fns';
-import api from '@/lib/axiosApi';
-import { useAppSelector } from '../store/store';
-import { Ticket } from '@/types';
 
+interface TicketDetails {
+  ticketId: number;
+  bookingId: string;
+  customerId: number;
+  flightId: number;
+  flightNumber: string;
+  fromAirport: string;
+  toAirport: string;
+  departureTime: string; 
+  arrivalTime: string;  
+  bookingStatus: string;
+  journeyDate: string;
+  bookingDate: string;   
+  totalPassengers: number;
+  totalFare: number;     
+  passengers: PassengerInfoDTO[];
+}
+
+interface PassengerInfoDTO {
+  fullName: string;
+  age: number;
+  gender: string;
+  seatNumber: string;
+}
 
 const MyBookingsPage = () => {
   const navigate = useNavigate();
+
+  // Declare state for bookings and selected booking
   const [isLoading, setIsLoading] = useState(true);
-  const [bookings, setBookings] = useState([]);
-  const [selectedBooking, setSelectedBooking] = useState(null);
-  const { customer } = useAppSelector((state) => state.auth);
+  const [bookings, setBookings] = useState<TicketDetails[]>([]);
+  const [selectedBooking, setSelectedBooking] = useState(null); 
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      if (!customer?.customerId) {
-        setIsLoading(false);
-        return;
-      }
-      try {
-        const response = await api.get(`/api/tickets/customer/${customer.customerId}`);
-        setBookings(response.data);
-      } catch (error) {
-        console.error("Error fetching bookings:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchBookings();
-  }, [customer?.customerId]);
-
-  const handleViewDetails = async (bookingId: string) => {
-    try {
-      const response = await api.get(`/api/tickets/bookings/${bookingId}`);
-      setSelectedBooking(response.data);
-    } catch (error) {
-      console.error("Error fetching booking details:", error);
+  const customerData = JSON.parse(localStorage.getItem("customer") || "{}");
+const tokenFromCustomer = customerData.token;
+console.log(tokenFromCustomer);
+const token = tokenFromCustomer;
+useEffect(() => {
+  fetch("http://localhost:8086/api/tickets/customer/myTickets", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+     .then((res) => res.json()) // Convert Response → JSON
+  .then((data) => {
+    setIsLoading(false);
+    console.log("Fetched data:", data);
+    // Make sure it's an array before mapping
+    if (Array.isArray(data)) {
+      console.log("Array")
+      setBookings(data);
+      console.log("bookings mapped",bookings);
+    } else {
+      console.error("Expected array but got:", data);
     }
+  })}, [navigate,tokenFromCustomer]);
+
+useEffect(() => {
+  console.log("Updated bookings:", bookings);
+}, [bookings]);
+  const handleViewDetails = (booking) => {
+    setSelectedBooking(booking);
   };
 
-  const getStatusColor = (status) => {
-    switch (status?.toUpperCase()) {
-      case 'CONFIRMED': return 'default';
-      case 'PENDING': return 'outline';
-      case 'CANCELLED': return 'destructive';
-      default: return 'secondary';
-    }
-  };
+  const getStatusColor = (status: string) => {
+  switch (status.toUpperCase()) {
+    case 'CONFIRMED':
+      return 'default';  // changed from 'success' to 'default'
+    case 'PENDING':
+      return 'outline';  // changed from 'warning' to 'outline' (or 'secondary')
+    case 'CANCELLED':
+      return 'destructive';
+    default:
+      return 'secondary';
+  }
+};
 
   if (isLoading) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-b from-blue-50 to-white">
-        <Loader2 className="h-10 w-10 animate-spin mb-3 text-blue-600" />
-        <p className="text-lg text-gray-700">Loading your bookings...</p>
+      <div className="container py-8 flex justify-center items-center min-h-[400px]">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-8 w-8 animate-spin mb-4" />
+          <p>Loading your bookings...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-blue-100 to-white">
-      {/* Hero Section */}
-      <div
-        className="relative h-[220px] bg-cover bg-center"
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e')" }}
-      >
-        <div className="absolute inset-0 bg-black/50 flex flex-col justify-center items-center text-white text-center px-4">
-          <h1 className="text-4xl font-bold drop-shadow-lg">My Bookings</h1>
-          <p className="mt-2 text-lg">View and manage all your flight reservations in one place</p>
-        </div>
-      </div>
+    <div className="container py-8">
+      <h1 className="text-3xl font-bold mb-2">My Bookings</h1>
+      <p className="text-muted-foreground mb-6">View and manage your flight bookings</p>
 
-      <div className="container py-10">
-        {bookings.length === 0 ? (
-          <Card className="shadow-lg">
-            <CardContent className="flex flex-col items-center py-12">
-              <Search className="h-12 w-12 text-gray-400 mb-4" />
-              <h2 className="text-xl font-semibold mb-2">No Bookings Found</h2>
-              <p className="text-center text-gray-500 mb-6 max-w-md">
-                You don't have any flight bookings yet. Start by searching for flights and make your first booking.
-              </p>
-              <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                <Link to="/search">Search Flights</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Bookings List */}
-            <div className={selectedBooking ? "lg:col-span-1" : "lg:col-span-3"}>
-              <Card className="shadow-md">
+      {bookings.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center py-12">
+            <Search className="h-12 w-12 text-muted-foreground mb-4" />
+            <h2 className="text-xl font-semibold mb-2">No Bookings Found</h2>
+            <p className="text-center text-muted-foreground mb-6 max-w-md">
+              You don't have any flight bookings yet. Start by searching for flights and make your first booking.
+            </p>
+            <Button asChild>
+              <Link to="/search">Search Flights</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className={`lg:col-span-${selectedBooking ? 1 : 3}`}>
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Bookings</CardTitle>
+                <CardDescription>You have {bookings.length} bookings</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Booking ID</TableHead>
+                      <TableHead className="hidden sm:table-cell">Flight</TableHead>
+                      <TableHead className="hidden md:table-cell">Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+  {bookings.map((booking) => (
+    <TableRow key={booking.ticketId}>
+      <TableCell className="font-medium">{booking.bookingId}</TableCell>
+      <TableCell className="hidden sm:table-cell">{booking.flightId}</TableCell>
+      <TableCell className="hidden md:table-cell">
+        {format(new Date(booking.journeyDate + "T00:00:00"), "MMM d, yyyy")}
+      </TableCell>
+      <TableCell>
+        <Badge variant={getStatusColor(booking.bookingStatus)}>
+          {booking.bookingStatus}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-right">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleViewDetails(booking)}
+          className="hover:text-blue-600"
+        >
+          View
+        </Button>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
+
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+
+          {selectedBooking && (
+            <div className="lg:col-span-2">
+              <Card>
                 <CardHeader>
-                  <CardTitle>Your Bookings</CardTitle>
-                  <CardDescription>You have {bookings.length} active bookings</CardDescription>
+                  <CardTitle>Booking Details</CardTitle>
+                  <CardDescription>Booking ID: {selectedBooking.bookingId}</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Booking ID</TableHead>
-                        <TableHead className="hidden sm:table-cell">Flight</TableHead>
-                        <TableHead className="hidden md:table-cell">Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {bookings.map((booking) => (
-                        <TableRow
-                          key={booking.bookingId}
-                          className="hover:bg-blue-50 transition cursor-pointer"
-                        >
-                          <TableCell className="font-medium">{booking.bookingId}</TableCell>
-                          <TableCell className="hidden sm:table-cell">{booking.flightNumber}</TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            {format(new Date(booking.departureTime), "MMM d, yyyy")}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusColor(booking.bookingStatus)}>
-                              {booking.bookingStatus}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewDetails(booking.bookingId)}
-                              className="hover:text-blue-600"
-                            >
-                              View
-                            </Button>
-                          </TableCell>
+                <CardContent className="space-y-6">
+                  {/* Flight details */}
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-lg">Flight Information</h3>
+                    <div className="bg-muted/30 p-4 rounded-md space-y-4">
+                      <div className="flex flex-col sm:flex-row justify-between">
+                        <div>
+                          <p className="font-medium text-lg">{format(new Date(selectedBooking.departureTime), "HH:mm")}</p>
+                          <p className="text-sm text-muted-foreground">{selectedBooking.fromAirport}</p>
+                          <p className="text-xs text-muted-foreground">{format(new Date(selectedBooking.departureTime), "MMM d, yyyy")}</p>
+                        </div>
+                        <div className="flex items-center my-2 sm:my-0">
+                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium text-lg">{format(new Date(selectedBooking.arrivalTime), "HH:mm")}</p>
+                          <p className="text-sm text-muted-foreground">{selectedBooking.toAirport}</p>
+                          <p className="text-xs text-muted-foreground">{format(new Date(selectedBooking.arrivalTime), "MMM d, yyyy")}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-4 pt-2 border-t">
+                        <div className="flex items-center text-sm">
+                          <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                          Flight: {selectedBooking.flightNumber}
+                        </div>
+                        <div className="flex items-center text-sm">
+                          <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                          Booked on: {format(new Date(selectedBooking.bookingDate), "MMM d, yyyy")}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Passenger details */}
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-lg">Passenger Information</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Age</TableHead>
+                          <TableHead>Gender</TableHead>
+                          <TableHead className="hidden sm:table-cell">Seat Preference</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Booking Details */}
-            {selectedBooking && (
-              <div className="lg:col-span-2">
-                <Card className="shadow-md">
-                  <CardHeader>
-                    <CardTitle>Booking Details</CardTitle>
-                    <CardDescription>Booking ID: {selectedBooking.bookingId}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Flight Info */}
-                    <div className="space-y-2">
-                      <h3 className="font-semibold text-lg">Flight Information</h3>
-                      <div className="bg-blue-50 p-4 rounded-md space-y-4">
-                        <div className="flex flex-col sm:flex-row justify-between">
-                          <div>
-                            <p className="font-medium text-lg">{format(new Date(selectedBooking.departureTime), "HH:mm")}</p>
-                            <p className="text-sm text-gray-600">{selectedBooking.fromAirport}</p>
-                            <p className="text-xs text-gray-500">{format(new Date(selectedBooking.departureTime), "MMM d, yyyy")}</p>
-                          </div>
-                          <div className="flex items-center my-2 sm:my-0">
-                            <ArrowRight className="h-4 w-4 text-gray-500" />
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium text-lg">{format(new Date(selectedBooking.arrivalTime), "HH:mm")}</p>
-                            <p className="text-sm text-gray-600">{selectedBooking.toAirport}</p>
-                            <p className="text-xs text-gray-500">{format(new Date(selectedBooking.arrivalTime), "MMM d, yyyy")}</p>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-4 pt-2 border-t border-blue-200">
-                          <div className="flex items-center text-sm">
-                            <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                            Flight: {selectedBooking.flightNumber}
-                          </div>
-                          <div className="flex items-center text-sm">
-                            <Clock className="h-4 w-4 mr-2 text-gray-500" />
-                            Booked on: {format(new Date(selectedBooking.bookingDate), "MMM d, yyyy")}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Passengers */}
-                    <div className="space-y-2">
-                      <h3 className="font-semibold text-lg">Passenger Information</h3>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Age</TableHead>
-                            <TableHead>Gender</TableHead>
-                            <TableHead className="hidden sm:table-cell">Seat Preference</TableHead>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedBooking.passengers.map((passenger, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{passenger.firstName} {passenger.lastName}</TableCell>
+                            <TableCell>{passenger.age}</TableCell>
+                            <TableCell>{passenger.gender}</TableCell>
+                            <TableCell className="hidden sm:table-cell">{passenger.seatPreference || "N/A"}</TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {selectedBooking.passengers.map((p, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell>{p.firstName} {p.lastName}</TableCell>
-                              <TableCell>{p.age}</TableCell>
-                              <TableCell>{p.gender}</TableCell>
-                              <TableCell className="hidden sm:table-cell">{p.seatPreference || "N/A"}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
 
-                    {/* Payment */}
-                    <div className="space-y-2">
-                      <h3 className="font-semibold text-lg">Payment Information</h3>
-                      <div className="bg-blue-50 p-4 rounded-md">
-                        <div className="flex justify-between mb-2">
-                          <span className="text-gray-600">Total Passengers</span>
-                          <span>{selectedBooking.totalPassengers}</span>
-                        </div>
-                        <div className="flex justify-between mb-2">
-                          <span className="text-gray-600">Base Fare</span>
-                          <span>₹{Math.round(selectedBooking.totalFare * 0.85)}</span>
-                        </div>
-                        <div className="flex justify-between mb-2">
-                          <span className="text-gray-600">Taxes & Fees</span>
-                          <span>₹{Math.round(selectedBooking.totalFare * 0.15)}</span>
-                        </div>
-                        <div className="flex justify-between pt-2 border-t border-blue-200 font-medium">
-                          <span>Total Amount</span>
-                          <span>₹{selectedBooking.totalFare}</span>
-                        </div>
+                  {/* Payment details */}
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-lg">Payment Information</h3>
+                    <div className="bg-muted/30 p-4 rounded-md">
+                      <div className="flex justify-between mb-2">
+                        <span className="text-muted-foreground">Total Passengers</span>
+                        <span>{selectedBooking.totalPassengers}</span>
+                      </div>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-muted-foreground">Base Fare</span>
+                        <span>₹{Math.round(selectedBooking.totalFare * 0.85)}</span>
+                      </div>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-muted-foreground">Taxes & Fees</span>
+                        <span>₹{Math.round(selectedBooking.totalFare * 0.15)}</span>
+                      </div>
+                      <div className="flex justify-between pt-2 border-t mt-2 font-medium">
+                        <span>Total Amount</span>
+                        <span>₹{selectedBooking.totalFare}</span>
                       </div>
                     </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button variant="ghost" onClick={() => setSelectedBooking(null)}>
-                      Back to All Bookings
-                    </Button>
-                    <div className="space-x-2">
-                      {selectedBooking.bookingStatus === "CONFIRMED" && (
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button variant="ghost" onClick={() => setSelectedBooking(null)}>
+                    Back to All Bookings
+                  </Button>
+                  <div className="space-x-2">
+                    {selectedBooking.bookingStatus === "CONFIRMED" && (
                       <Button 
                         variant="destructive" 
                         onClick={() => navigate(`/ticket-cancel/${selectedBooking.bookingId}`, {
@@ -256,16 +284,16 @@ const MyBookingsPage = () => {
                       >
                         Cancel Booking
                       </Button>
+
                     )}
-                      <Button className="bg-blue-600 hover:bg-blue-700">Download E-Ticket</Button>
-                    </div>
-                  </CardFooter>
-                </Card>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+                    <Button>Download E-Ticket</Button>
+                  </div>
+                </CardFooter>
+              </Card>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
