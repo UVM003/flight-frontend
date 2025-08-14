@@ -79,3 +79,61 @@ export interface Customer {
   verified: boolean;
 }
 
+//My Booking Details
+export interface TicketDetails {
+  ticketId: number;
+  bookingId: string;
+  customerId: number;
+  flightId: number;
+  flightNumber: string;
+  fromAirport: string;
+  toAirport: string;
+  departureTime: string; 
+  arrivalTime: string;  
+  bookingStatus: string;
+  journeyDate: string;
+  bookingDate: string;   
+  totalPassengers: number;
+  totalFare: number;     
+  passengers: PassengerInfoDTO[];
+}
+
+interface PassengerInfoDTO {
+  fullName: string;
+  age: number;
+  gender: string;
+  seatNumber: string;
+}
+
+//Booking Details
+export interface BookingTicketDetails {
+  ticketId: number;
+  bookingId: string;
+  bookingDate: string;
+  customerId: number;
+  flightId: number;
+  journeyDate: string;
+  seatCount: number;
+  status: string;
+  totalFare: number;
+}
+
+//Cancellation Details
+export interface CancellationTicketDetails {
+  bookingId: string;
+  journeyDate: string;
+  totalFare: number;
+  cancellationCharge: number;
+  refundAmount: number;
+  refundStatus: string;
+  message: string;
+}
+
+//Handle Exceptions
+export interface BackendError {
+  timestamp: string;
+  message: string;
+  details: string;
+  httpCodeMessage: string;
+  error?: string;
+}

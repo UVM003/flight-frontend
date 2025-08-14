@@ -20,31 +20,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Calendar, Clock, ArrowRight, Search } from 'lucide-react';
 import { format } from 'date-fns';
+import { TicketDetails } from '@/types';
 
-interface TicketDetails {
-  ticketId: number;
-  bookingId: string;
-  customerId: number;
-  flightId: number;
-  flightNumber: string;
-  fromAirport: string;
-  toAirport: string;
-  departureTime: string; 
-  arrivalTime: string;  
-  bookingStatus: string;
-  journeyDate: string;
-  bookingDate: string;   
-  totalPassengers: number;
-  totalFare: number;     
-  passengers: PassengerInfoDTO[];
-}
 
-interface PassengerInfoDTO {
-  fullName: string;
-  age: number;
-  gender: string;
-  seatNumber: string;
-}
 
 const MyBookingsPage = () => {
   const navigate = useNavigate();
@@ -54,9 +32,8 @@ const MyBookingsPage = () => {
   const [bookings, setBookings] = useState<TicketDetails[]>([]);
   const [selectedBooking, setSelectedBooking] = useState(null); 
 
-  const customerData = JSON.parse(localStorage.getItem("customer") || "{}");
+const customerData = JSON.parse(localStorage.getItem("customer") || "{}");
 const tokenFromCustomer = customerData.token;
-console.log(tokenFromCustomer);
 const token = tokenFromCustomer;
 useEffect(() => {
   fetch("http://localhost:8086/api/tickets/customer/myTickets", {
@@ -233,7 +210,7 @@ useEffect(() => {
                       <TableBody>
                         {selectedBooking.passengers.map((passenger, index) => (
                           <TableRow key={index}>
-                            <TableCell>{passenger.firstName} {passenger.lastName}</TableCell>
+                            <TableCell>{passenger.fullName}</TableCell>
                             <TableCell>{passenger.age}</TableCell>
                             <TableCell>{passenger.gender}</TableCell>
                             <TableCell className="hidden sm:table-cell">{passenger.seatPreference || "N/A"}</TableCell>
