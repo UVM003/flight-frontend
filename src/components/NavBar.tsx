@@ -43,6 +43,7 @@ const dispatch = useDispatch();
           <Link to="/search" className="hover:text-primary">Search Flights</Link>
           {customer?.role === "CUSTOMER" && <Link to="/bookings" className="hover:text-primary">My Bookings</Link>}
           {customer?.role === "ADMIN" && <Link to="/addFlight" className="hover:text-primary">Add Flight</Link>}
+          {customer?.role === "ADMIN" && <Link to="/add-Admin" className="hover:text-primary">Manage Users</Link>}
           {customer?.role == null ? (
             <>
               <Link to="/login" className="hover:text-primary">Login</Link>

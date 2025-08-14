@@ -12,19 +12,32 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import api from "@/lib/axiosApi";
 
-// Mock existing flight
-const MOCK_FLIGHT = {
-  flightId: 1,
-  flightNumber: "AI101",
-  airlineName: "Air India",
-  fromAirport: "DEL",
-  toAirport: "BOM",
-  departureTime: "2023-08-10T08:00:00",
-  arrivalTime: "2023-08-10T10:00:00",
-  totalSeats: 180,
-  availableSeats: 45,
-  baseFare: 3500,
-};
+const airports = [
+  { code: "BLR", name: "Bengaluru: Kempegowda International Airport" },
+  { code: "DEL", name: "Delhi: Indira Gandhi International Airport" },
+  { code: "BOM", name: "Mumbai: Chhatrapati Shivaji Maharaj International Airport" },
+  { code: "MAA", name: "Chennai: Chennai International Airport" },
+  { code: "CCU", name: "Kolkata: Netaji Subhas Chandra Bose International Airport" },
+  { code: "HYD", name: "Hyderabad: Rajiv Gandhi International Airport" },
+  { code: "AMD", name: "Ahmedabad: Sardar Vallabhbhai Patel International Airport" },
+  { code: "COK", name: "Kochi: Cochin International Airport" },
+  { code: "GOI", name: "Goa: Dabolim Airport" },
+  { code: "JAI", name: "Jaipur: Jaipur International Airport" },
+  { code: "PNQ", name: "Pune: Pune International Airport" },
+  { code: "LKO", name: "Lucknow: Chaudhary Charan Singh International Airport" },
+  { code: "NAG", name: "Nagpur: Dr. Babasaheb Ambedkar International Airport" },
+  { code: "VTZ", name: "Visakhapatnam: Visakhapatnam International Airport" },
+  { code: "TIR", name: "Tirupati: Tirupati Airport" },
+  { code: "VGA", name: "Vijayawada: Vijayawada Airport" },
+  { code: "IXE", name: "Mangalore: Mangalore International Airport" },
+  { code: "TRV", name: "Thiruvananthapuram: Trivandrum International Airport" },
+  { code: "CCJ", name: "Calicut: Calicut International Airport" },
+  { code: "CNN", name: "Kannur: Kannur International Airport" },
+  { code: "CJB", name: "Coimbatore: Coimbatore International Airport" },
+  { code: "TRZ", name: "Tiruchirappalli: Tiruchirappalli International Airport" },
+  { code: "IXM", name: "Madurai: Madurai International Airport" },
+  { code: "BBI", name: "Bhubaneswar: Biju Patnaik International Airport" },
+]
 
 // Validation schema
 export const flightSchema = z
@@ -123,10 +136,8 @@ export const flightSchema = z
 type FlightFormValues = z.infer<typeof flightSchema>;
 
 export default function AddFlightPage() {
-     const { flightId } = useParams<{ flightId: string }>();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
- const [flight, setFlight] = useState(MOCK_FLIGHT);
 
   
 
@@ -228,31 +239,57 @@ export default function AddFlightPage() {
               {/* From & To Airports */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
-                  control={form.control}
-                  name="fromAirport"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>From Airport</FormLabel>
-                      <FormControl>
-                        <Input {...field} disabled={isLoading} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="toAirport"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>To Airport</FormLabel>
-                      <FormControl>
-                        <Input {...field} disabled={isLoading} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+  control={form.control}
+  name="fromAirport"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>From Airport</FormLabel>
+      <FormControl>
+        <select
+          {...field}
+          disabled={isLoading}
+          className="w-full border rounded-lg h-10 px-2 py-1"
+        >
+          <option value="" disabled>
+            Select Departure Airport
+          </option>
+          {airports.map((airport) => (
+            <option key={airport.code} value={airport.code}>
+              {airport.name} ({airport.code})
+            </option>
+          ))}
+        </select>
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+           <FormField
+  control={form.control}
+  name="toAirport"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>To Airport</FormLabel>
+      <FormControl>
+        <select
+          {...field}
+          disabled={isLoading}
+          className="w-full border rounded-lg h-10 px-2 py-1"
+        >
+          <option value="" disabled>
+            Select Destination Airport
+          </option>
+          {airports.map((airport) => (
+            <option key={airport.code} value={airport.code}>
+              {airport.name} ({airport.code})
+            </option>
+          ))}
+        </select>
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
               </div>
 
               {/* Departure */}

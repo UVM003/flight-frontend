@@ -233,7 +233,7 @@ useEffect(() => {
                       <TableBody>
                         {selectedBooking.passengers.map((passenger, index) => (
                           <TableRow key={index}>
-                            <TableCell>{passenger.firstName} {passenger.lastName}</TableCell>
+                            <TableCell>{passenger.fullName}</TableCell>
                             <TableCell>{passenger.age}</TableCell>
                             <TableCell>{passenger.gender}</TableCell>
                             <TableCell className="hidden sm:table-cell">{passenger.seatPreference || "N/A"}</TableCell>
