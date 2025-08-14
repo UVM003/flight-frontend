@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { downloadETicket } from "../utils/downloadETicket";
 import { 
   Card, 
   CardContent, 
@@ -127,7 +128,7 @@ useEffect(() => {
   {bookings.map((booking) => (
     <TableRow key={booking.ticketId}>
       <TableCell className="font-medium">{booking.bookingId}</TableCell>
-      <TableCell className="hidden sm:table-cell">{booking.flightId}</TableCell>
+      <TableCell className="hidden sm:table-cell">{booking.flightNumber}</TableCell>
       <TableCell className="hidden md:table-cell">
         {format(new Date(booking.journeyDate + "T00:00:00"), "MMM d, yyyy")}
       </TableCell>
@@ -263,7 +264,10 @@ useEffect(() => {
                       </Button>
 
                     )}
-                    <Button>Download E-Ticket</Button>
+                    <Button 
+                      onClick={() => downloadETicket(selectedBooking)}>
+                      Download E-Ticket
+                      </Button>
                   </div>
                 </CardFooter>
               </Card>
