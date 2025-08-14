@@ -95,13 +95,15 @@ const TicketCancellationPage = () => {
 
   // Get the current date for OTP verification
   const currentDate = new Date().toISOString().split("T")[0]; // format: YYYY-MM-DD
-
+ const customerData = JSON.parse(localStorage.getItem("customer") || "{}");
+const tokenFromCustomer = customerData.token;
+const token = tokenFromCustomer;
   useEffect(() => {
     const fetchTicketDetails = async () => {
       setIsLoading(true);
       // Use the security token if available from local storage
       try {
-        const token = localStorage.getItem("authToken") || "";
+        // const token = tokenFromCustomer|| "";
         const data = await TicketCancellationService.getTicketDetails(
           bookingId!,
           token
@@ -139,7 +141,7 @@ const TicketCancellationPage = () => {
 
     try {
       // Use the security token if available from local storage
-      const token = localStorage.getItem("authToken") || "";
+      // const token = tokenFromCustomer|| "";
       const response = await TicketCancellationService.requestOtp(token);
       console.log(response);
       if (isBackendError(response)) {
@@ -152,6 +154,7 @@ const TicketCancellationPage = () => {
           "OTP sent successfully. Please check your registered email."
         );
         toast.success("OTP sent successfully");
+        
       }
     } catch (error) {
       console.error("Error requesting OTP:", error);
@@ -173,7 +176,7 @@ const TicketCancellationPage = () => {
     setSuccessMessage("");
 
     // Use the security token if available from local storage
-    const token = localStorage.getItem("authToken") || "";
+    // const token = tokenFromCustomer|| "";
     const data = await TicketCancellationService.verifyOtp(
       bookingId!,
       otp,
@@ -194,6 +197,7 @@ const TicketCancellationPage = () => {
       setSuccessMessage(response.message);
       toast.success("Ticket cancelled successfully");
       setErrorMessage("");
+      setVerificationStatus(VerificationStatus.VERIFIED);
     }
 
     setIsVerifyingOtp(false);
