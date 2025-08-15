@@ -38,12 +38,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-<<<<<<< Updated upstream
-import { AuthService } from '@/lib/api';
-import { Customer } from '@/types.ts';
-import axios from 'axios';
-
-=======
 import { useDispatch } from 'react-redux';
 import { logout } from '@/store/authSlice';
 import api from '@/lib/axiosApi';
@@ -56,7 +50,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from "@/components/ui/use-toast";
->>>>>>> Stashed changes
 // --- API Configuration ---
 // Make sure to fill in your API base URL here
 const API_BASE_URL = 'http://localhost:8086/api/auth/customers';
@@ -98,10 +91,7 @@ type PasswordFormValues = z.infer<typeof passwordSchema>;
 const ProfilePage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-<<<<<<< Updated upstream
-=======
    const { customer:customerAuth, isAuthenticated } = useAppSelector((state) => state.auth);
->>>>>>> Stashed changes
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
@@ -183,16 +173,12 @@ const ProfilePage = () => {
     fetchProfile();
   }, [navigate, profileForm]);
 
-<<<<<<< Updated upstream
-  // --- Handle Profile Update Submission ---
-=======
 // If you still want it to run on mount
 useEffect(() => {
   fetchProfile();
 }, [isAuthenticated]);
 
     // --- Handle Profile Update Submission ---
->>>>>>> Stashed changes
   const onProfileSubmit = async (data: ProfileFormValues) => {
     setIsLoading(true);
     setProfileError(null);
@@ -297,11 +283,6 @@ useEffect(() => {
         },
         data: { password: deletePassword },
       });
-<<<<<<< Updated upstream
-
-      localStorage.removeItem('authToken');
-      navigate('/login');
-=======
       toast({
   title: "Account Deleted",
   description: "Your account has been deleted successfully.",
@@ -311,7 +292,6 @@ useEffect(() => {
        setTimeout(() => {
       handleLogout();
     }, 2000); 
->>>>>>> Stashed changes
     } catch (err: any) {
       setProfileError(err.response?.data?.message || 'Failed to delete profile. Please try again.');
       console.error('Delete Error:', err);
@@ -700,15 +680,6 @@ useEffect(() => {
               This action cannot be undone. Please enter your password to confirm account deletion.
             </DialogDescription>
           </DialogHeader>
-<<<<<<< Updated upstream
-          <div className="py-4">
-            <Input
-              type="password"
-              placeholder="Enter your password"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-            />
-=======
           <div className="py-4 relative">
                                                              <Input
     type={passwordVisibility.delete ? 'text' : 'password'}
@@ -728,7 +699,6 @@ useEffect(() => {
       <Eye className="h-4 w-4" aria-label="Show password" />
     )}
   </button>
->>>>>>> Stashed changes
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
