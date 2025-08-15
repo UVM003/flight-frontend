@@ -38,10 +38,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+<<<<<<< Updated upstream
 import { AuthService } from '@/lib/api';
 import { Customer } from '@/types.ts';
 import axios from 'axios';
 
+=======
+import { useDispatch } from 'react-redux';
+import { logout } from '@/store/authSlice';
+import api from '@/lib/axiosApi';
+import { useAppSelector } from '@/store/store';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { toast } from "@/components/ui/use-toast";
+>>>>>>> Stashed changes
 // --- API Configuration ---
 // Make sure to fill in your API base URL here
 const API_BASE_URL = 'http://localhost:8086/api/auth/customers';
@@ -83,6 +98,10 @@ type PasswordFormValues = z.infer<typeof passwordSchema>;
 const ProfilePage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+<<<<<<< Updated upstream
+=======
+   const { customer:customerAuth, isAuthenticated } = useAppSelector((state) => state.auth);
+>>>>>>> Stashed changes
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
@@ -97,6 +116,7 @@ const ProfilePage = () => {
     current: false,
     new: false,
     confirm: false,
+    delete: false,
   });
 
   const profileForm = useForm<ProfileFormValues>({
@@ -163,7 +183,16 @@ const ProfilePage = () => {
     fetchProfile();
   }, [navigate, profileForm]);
 
+<<<<<<< Updated upstream
   // --- Handle Profile Update Submission ---
+=======
+// If you still want it to run on mount
+useEffect(() => {
+  fetchProfile();
+}, [isAuthenticated]);
+
+    // --- Handle Profile Update Submission ---
+>>>>>>> Stashed changes
   const onProfileSubmit = async (data: ProfileFormValues) => {
     setIsLoading(true);
     setProfileError(null);
@@ -225,8 +254,12 @@ const ProfilePage = () => {
       );
       setPasswordSuccess(true);
       passwordForm.reset();
-      setTimeout(() => setPasswordSuccess(false), 3000);
-       handleLogout();
+      setTimeout(() => {
+  setPasswordSuccess(false);
+
+  // After hiding success, logout & redirect
+  handleLogout();
+}, 3000);
     } catch (err: any) {
       console.error('Password change error:', err);
       console.error('Error response:', err.response);
@@ -264,9 +297,21 @@ const ProfilePage = () => {
         },
         data: { password: deletePassword },
       });
+<<<<<<< Updated upstream
 
       localStorage.removeItem('authToken');
       navigate('/login');
+=======
+      toast({
+  title: "Account Deleted",
+  description: "Your account has been deleted successfully.",
+  variant: "default"
+});
+      
+       setTimeout(() => {
+      handleLogout();
+    }, 2000); 
+>>>>>>> Stashed changes
     } catch (err: any) {
       setProfileError(err.response?.data?.message || 'Failed to delete profile. Please try again.');
       console.error('Delete Error:', err);
@@ -277,7 +322,7 @@ const ProfilePage = () => {
     }
   };
 
-  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
+  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm' | 'delete') => {
     setPasswordVisibility((prevState) => ({
       ...prevState,
       [field]: !prevState[field],
@@ -655,6 +700,7 @@ const ProfilePage = () => {
               This action cannot be undone. Please enter your password to confirm account deletion.
             </DialogDescription>
           </DialogHeader>
+<<<<<<< Updated upstream
           <div className="py-4">
             <Input
               type="password"
@@ -662,6 +708,27 @@ const ProfilePage = () => {
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
             />
+=======
+          <div className="py-4 relative">
+                                                             <Input
+    type={passwordVisibility.delete ? 'text' : 'password'}
+    placeholder="Enter your password"
+    value={deletePassword}
+    onChange={(e) => setDeletePassword(e.target.value)}
+    className="pr-10" // space for icon
+  />
+  <button
+    type="button"
+    onClick={() => togglePasswordVisibility('delete')}
+    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+  >
+    {passwordVisibility.delete ? (
+      <EyeOff className="h-4 w-4" aria-label="Hide password" />
+    ) : (
+      <Eye className="h-4 w-4" aria-label="Show password" />
+    )}
+  </button>
+>>>>>>> Stashed changes
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
