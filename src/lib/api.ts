@@ -66,16 +66,15 @@ export const TicketCancellationService = {
 
   // Request OTP for cancellation 
   requestOtp: (token: string) =>
-    post(`/api/ticketCancel/otp/request`,
-      {}, 
+    get(`/api/ticketCancel/otp/request`, 
       { Authorization: token ? `Bearer ${token}` : '' }
     ),
 
   // Verify OTP and process cancellation (POST request with params)
   verifyOtp: (bookingId: string, otp: string, cancellationDate: string, token: string) =>
     post(
-      `/api/ticketCancel/otp/${bookingId}/verify?cancellationDate=${cancellationDate}&otp=${otp}`,
-      {}, 
+      `/api/ticketCancel/otp/${bookingId}/verify?cancellationDate=${cancellationDate}`,
+      {otp}, 
       { Authorization: token ? `Bearer ${token}` : '' }
     ),
 };
