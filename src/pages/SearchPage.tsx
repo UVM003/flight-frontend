@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarIcon, Loader2, Plane, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Checkbox } from "@/components/ui/checkbox";
-//airport lists
+
+// Airport list
 const airports = [
   { code: "BLR", name: "Bengaluru: Kempegowda International Airport" },
   { code: "DEL", name: "Delhi: Indira Gandhi International Airport" },
@@ -39,81 +40,56 @@ const airports = [
   { code: "TRZ", name: "Tiruchirappalli: Tiruchirappalli International Airport" },
   { code: "IXM", name: "Madurai: Madurai International Airport" },
   { code: "BBI", name: "Bhubaneswar: Biju Patnaik International Airport" },
-]
-// Mock data for demo purposes
-const MOCK_FLIGHTS = [
-  {
-    flightId: 4,
-    flightNumber: "AI101",
-    airlineName: "Air India",
-    fromAirport: "DEL",
-    toAirport: "BOM",
-    departureTime: "2023-08-10T08:00:00",
-    arrivalTime: "2023-08-10T10:00:00",
-    totalSeats: 180,
-    availableSeats: 45,
-    baseFare: 3500,
-  },
-  {
-    flightId: 2,
-    flightNumber: "UK203",
-    airlineName: "Vistara",
-    fromAirport: "DEL",
-    toAirport: "BOM",
-    departureTime: "2023-08-10T12:30:00",
-    arrivalTime: "2023-08-10T14:45:00",
-    totalSeats: 150,
-    availableSeats: 22,
-    baseFare: 4200,
-  },
-  {
-    flightId: 3,
-    flightNumber: "SG812",
-    airlineName: "SpiceJet",
-    fromAirport: "DEL",
-    toAirport: "BOM",
-    departureTime: "2023-08-10T16:15:00",
-    arrivalTime: "2023-08-10T18:30:00",
-    totalSeats: 186,
-    availableSeats: 76,
-    baseFare: 2900,
-  }
 ];
 
-const SearchPage = () => {
+const airlines = ['IndiGo', 'Air India', 'Vistara', 'SpiceJet', 'Go First'];
+
+const pageSize = 5;
+
+const SearchPage: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [flights, setFlights] = useState<any[]>([]);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [searchParams, setSearchParams] = useState({
-    fromAirport: '',
-    toAirport: '',
-    departureDate: format(new Date(), 'yyyy-MM-dd'),
+    fromAirport: "",
+    toAirport: "",
+    departureDate: format(new Date(), "yyyy-MM-dd"),
   });
-
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
-  const [fareRange, setFareRange] = useState([0, 10000]);
-  const [minSeats, setMinSeats] = useState('');
-
-  const airlines = ['IndiGo', 'Air India', 'Vistara', 'SpiceJet', 'Go First'];
-
+  const [fareRange, setFareRange] = useState<number[]>([0, 10000]);
+  const [minSeats, setMinSeats] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(0);
-  const pageSize = 5;
-
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const fetchFlights = async (page: number) => {
-    if (!searchParams.fromAirport || !searchParams.toAirport) {
-      alert("Please enter both From and To airports");
-      return;
-    }
+  // NEW: server-search mode flag
+  const [isServerSearch, setIsServerSearch] = useState(false);
 
-    // *** Frontend validation for same airports ***
-    if (searchParams.fromAirport === searchParams.toAirport) {
-      alert("Departure and destination airports cannot be the same. Please select different airports.");
-      return;
-    }
+  // initial load - fetch all flights (client-side pagination)
+  useEffect(() => {
+    fetchAllFlights();
+  }, []);
 
+  const fetchAllFlights = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("http://localhost:8086/api/flights");
+      if (!response.ok) throw new Error("Failed to fetch flights");
+      const data = await response.json();
+      setFlights(data);
+      setCurrentPage(0);
+      setIsServerSearch(false); // ensure client-mode
+    } catch (error: any) {
+      console.error(error);
+      alert(error.message || "Error fetching flights");
+      setFlights([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch a server-side page with filters applied
+  const fetchFilteredFlights = async (page = 0) => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({
@@ -121,30 +97,33 @@ const SearchPage = () => {
         toAirport: searchParams.toAirport,
         departureDate: searchParams.departureDate,
         page: String(page),
-        size: String(pageSize)
+        size: String(pageSize),
       });
 
+      // append airlines as multiple params if some are selected (and not all)
       if (selectedAirlines.length > 0 && selectedAirlines.length < airlines.length) {
-        selectedAirlines.forEach(airline => params.append("airlineName", airline));
+        selectedAirlines.forEach((a) => params.append("airlineName", a));
       }
+
       if (fareRange[0] > 0) params.append("minFare", String(fareRange[0]));
       if (fareRange[1] < 10000) params.append("maxFare", String(fareRange[1]));
       if (minSeats) params.append("minSeats", String(minSeats));
 
-      const response = await fetch(
-        `http://localhost:8086/api/filter/flights/search/advanced?${params}`
-      );
+      const url = `http://localhost:8086/api/filter/flights/search/advanced?${params.toString()}`;
+      const response = await fetch(url);
       if (!response.ok) {
-        const errorData = await response.json();
-        console.log("Error fetching flights:", errorData);
-        throw new Error(errorData.error || "No available flights");
+        // backend returns 4xx/5xx -> treat as no results for this page
+        throw new Error("No flights found");
       }
       const data = await response.json();
-      console.log(data)
+
+      // backend returns the single page (size = pageSize)
       setFlights(data);
       setCurrentPage(page);
+      setIsServerSearch(true);
+      setFiltersOpen(false);
     } catch (error: any) {
-      console.error("Error fetching flights:", error);
+      console.error(error);
       setFlights([]);
       alert(error.message || "Error fetching flights");
     } finally {
@@ -152,48 +131,61 @@ const SearchPage = () => {
     }
   };
 
-  const handleSearch = () => {
-    setFiltersOpen(false);
-    fetchFlights(0);
+  // Handle search button -> fetch page 0 from server (server-side pagination mode)
+  const handleSearch = async () => {
+    if (!searchParams.fromAirport || !searchParams.toAirport) {
+      alert("Please select both From and To airports");
+      return;
+    }
+    if (searchParams.fromAirport === searchParams.toAirport) {
+      alert("Departure and destination cannot be the same");
+      return;
+    }
+    // call server-side search page 0
+    await fetchFilteredFlights(0);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  // Pagination handlers:
+  // - if server-mode: trigger API call for next/prev page
+  // - else: client-side local pagination (slice)
+  const handleNextPage = () => {
+    if (isServerSearch) {
+      // server returns pageSize items. If the current returned page has fewer than pageSize,
+      // we assume it's the last page (you accepted this risk).
+      if (flights.length < pageSize) return;
+      fetchFilteredFlights(currentPage + 1);
+    } else {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage === 0) return;
+    if (isServerSearch) {
+      fetchFilteredFlights(currentPage - 1);
+    } else {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
+
+  const handleViewFlight = (flightId: number) => navigate(`/flights/${flightId}`);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = e.target;
     setSearchParams((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      setDate(date);
-      setSearchParams((prev) => ({
-        ...prev,
-        departureDate: format(date, 'yyyy-MM-dd')
-      }));
-    }
-  };
-
-  const handleViewFlight = (flightId: number) => {
-    if (!flightId) {
-      alert("Flight ID is undefined!");
-      return;
-    }
-    navigate(`/flights/${flightId}`);
+  const handleDateChange = (d: Date | undefined) => {
+    if (d) setSearchParams((prev) => ({ ...prev, departureDate: format(d, "yyyy-MM-dd") }));
+    setDate(d);
   };
 
   const toggleAirline = (airline: string) => {
-    setSelectedAirlines((prev) =>
-      prev.includes(airline)
-        ? prev.filter((a) => a !== airline)
-        : [...prev, airline]
-    );
+    setSelectedAirlines((prev) => (prev.includes(airline) ? prev.filter((a) => a !== airline) : [...prev, airline]));
   };
 
   const toggleSelectAllAirlines = () => {
-    if (selectedAirlines.length === airlines.length) {
-      setSelectedAirlines([]);
-    } else {
-      setSelectedAirlines([...airlines]);
-    }
+    setSelectedAirlines((prev) => (prev.length === airlines.length ? [] : [...airlines]));
   };
 
   const calculateDuration = (departureTime: string, arrivalTime: string) => {
@@ -205,6 +197,26 @@ const SearchPage = () => {
     return `${diffHrs}h ${diffMins}m`;
   };
 
+  // Pagination display:
+  // - if server-mode, flights already hold the current page
+  // - else slice the full flights list for client pagination
+  const paginatedFlights = isServerSearch ? flights : flights.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
+  // Next button disabled logic:
+  // - server-mode: disable when returned page length < pageSize (assume last)
+  // - client-mode: disable when next would exceed local results
+  const isNextDisabled = isServerSearch ? flights.length < pageSize : (currentPage + 1) * pageSize >= flights.length;
+  const isPrevDisabled = currentPage === 0;
+
+  const clearFilters = () => {
+    setSearchParams({ fromAirport: "", toAirport: "", departureDate: format(new Date(), "yyyy-MM-dd") });
+    setSelectedAirlines([]);
+    setFareRange([0, 10000]);
+    setMinSeats("");
+    setIsServerSearch(false);
+    fetchAllFlights();
+  };
+
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold mb-6">Search Flights</h1>
@@ -213,127 +225,74 @@ const SearchPage = () => {
       <Card className="mb-8">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-            {/* From Airport dropdown */}
+            {/* From */}
             <div className="space-y-2">
-              <Label htmlFor="fromAirport">From</Label>
-              <select
-                id="fromAirport"
-                name="fromAirport"
-                value={searchParams.fromAirport}
-                onChange={handleInputChange}
-                className="w-full border rounded px-2 py-1"
-              >
-                <option value="" disabled>
-                  Select Departure Airport
-                </option>
-                {airports.map((airport) => (
-                  <option key={airport.code} value={airport.code}>
-                    {airport.name} ({airport.code})
+              <Label>From</Label>
+              <select name="fromAirport" value={searchParams.fromAirport} onChange={handleInputChange} className="w-full border rounded px-2 py-1">
+                <option value="">Select Departure Airport</option>
+                {airports.map((a) => (
+                  <option key={a.code} value={a.code}>
+                    {a.name} ({a.code})
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* To Airport dropdown */}
+            {/* To */}
             <div className="space-y-2">
-              <Label htmlFor="toAirport">To</Label>
-              <select
-                id="toAirport"
-                name="toAirport"
-                value={searchParams.toAirport}
-                onChange={handleInputChange}
-                className="w-full border rounded px-2 py-1"
-              >
-                <option value="" disabled>
-                  Select Destination Airport
-                </option>
-                {airports.map((airport) => (
-                  <option key={airport.code} value={airport.code}>
-                    {airport.name} ({airport.code})
+              <Label>To</Label>
+              <select name="toAirport" value={searchParams.toAirport} onChange={handleInputChange} className="w-full border rounded px-2 py-1">
+                <option value="">Select Destination Airport</option>
+                {airports.map((a) => (
+                  <option key={a.code} value={a.code}>
+                    {a.name} ({a.code})
                   </option>
                 ))}
               </select>
             </div>
 
+            {/* Date */}
             <div className="space-y-2">
               <Label>Departure Date</Label>
-              {/* ... same calendar popover as before ... */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
+                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    {date ? format(date, "PPP") : "Pick a date"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={handleDateChange}
-                    initialFocus
-                    disabled={(date) => {
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      return date < today;
-                    }}
-                  />
+                  <Calendar mode="single" selected={date} onSelect={handleDateChange} />
                 </PopoverContent>
               </Popover>
             </div>
 
-            {/* Search & Filters */}
-            <div className="md:col-span-3 flex gap-2">
-              <Button
-                className="w-full md:w-auto"
-                onClick={handleSearch}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Plane className="mr-2 h-4 w-4" />
-                    Search Flights
-                  </>
-                )}
+            {/* Search + Filters */}
+            <div className="md:col-span-3 flex gap-2 mt-4">
+              <Button onClick={handleSearch} className="flex items-center gap-2">
+                {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : <Plane className="h-4 w-4" />}
+                Search
               </Button>
 
-              {/* Filters Popover */}
               <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline">
-                    <SlidersHorizontal className="mr-2 h-4 w-4" />
-                    Filters
+                    <SlidersHorizontal className="mr-2 h-4 w-4" /> Filters
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-4 space-y-4">
-                  {/* Airline checkboxes */}
+                  {/* Airlines */}
                   <div>
                     <Label>Airlines</Label>
                     <div className="space-y-2 mt-2">
                       <div className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={selectedAirlines.length === airlines.length}
-                          onCheckedChange={toggleSelectAllAirlines}
-                        />
+                        <Checkbox checked={selectedAirlines.length === airlines.length} onCheckedChange={toggleSelectAllAirlines} />
                         <span>Select All</span>
                       </div>
-                      {airlines.map((airline) => (
-                        <div key={airline} className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={selectedAirlines.includes(airline)}
-                            onCheckedChange={() => toggleAirline(airline)}
-                          />
-                          <span>{airline}</span>
+                      {airlines.map((a) => (
+                        <div key={a} className="flex items-center space-x-2">
+                          <Checkbox checked={selectedAirlines.includes(a)} onCheckedChange={() => toggleAirline(a)} />
+                          <span>{a}</span>
                         </div>
                       ))}
                     </div>
@@ -341,12 +300,7 @@ const SearchPage = () => {
 
                   <div>
                     <Label>Fare Range</Label>
-                    <Slider
-                      value={fareRange}
-                      onValueChange={setFareRange}
-                      max={10000}
-                      step={500}
-                    />
+                    <Slider value={fareRange} onValueChange={setFareRange} max={10000} step={500} />
                     <div className="flex justify-between text-sm mt-1">
                       <span>₹{fareRange[0]}</span>
                       <span>₹{fareRange[1]}</span>
@@ -355,17 +309,14 @@ const SearchPage = () => {
 
                   <div>
                     <Label>Minimum Seats</Label>
-                    <input
-                      type="number"
-                      value={minSeats}
-                      onChange={(e) => setMinSeats(e.target.value)}
-                      className="w-full border rounded px-2 py-1"
-                      min={0}
-                    />
+                    <input type="number" value={minSeats} onChange={(e) => setMinSeats(e.target.value)} className="w-full border rounded px-2 py-1" min={0} />
                   </div>
 
                   <Button className="w-full" onClick={handleSearch}>
                     Apply Filters
+                  </Button>
+                  <Button variant="ghost" className="w-full" onClick={clearFilters}>
+                    Clear Filters
                   </Button>
                 </PopoverContent>
               </Popover>
@@ -374,96 +325,71 @@ const SearchPage = () => {
         </CardContent>
       </Card>
 
-      {/* Results */}
+      {/* Flight Results */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">
-          {isLoading
-            ? "Loading..."
-            : flights.length > 0
-              ? `${flights.length} Flights Found`
-              : "No Flights Found"}
-        </h2>
+        {isLoading && <div className="text-center py-4">Loading flights...</div>}
+        {!isLoading && flights.length > 0 && (
+          <>
+            <h2 className="text-2xl font-semibold">{isServerSearch ? `Showing page ${currentPage + 1}` : `${flights.length} Flights Found`}</h2>
 
-        <AnimatePresence>
-          {flights.map((flight) => (
-            <motion.div
-              key={flight.flightId}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="p-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                    <div className="space-y-1">
-                      <div className="font-semibold text-lg">{flight.airlineName}</div>
-                      <div className="text-muted-foreground text-sm">{flight.flightNumber}</div>
-                    </div>
-
-                    <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-                      <div className="text-center">
-                        <div className="text-xl font-semibold">
-                          {format(new Date(flight.departureTime), "HH:mm")}
+            <AnimatePresence>
+              {paginatedFlights.map((flight) => (
+                <motion.div key={flight.flightId} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+                  <Card className="overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="p-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                        <div className="space-y-1">
+                          <div className="font-semibold text-lg">{flight.airlineName}</div>
+                          <div className="text-muted-foreground text-sm">{flight.flightNumber}</div>
                         </div>
-                        <div className="text-muted-foreground">{flight.fromAirport}</div>
+                        <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
+                          <div className="text-center">
+                            <div className="text-xl font-semibold">{format(new Date(flight.departureTime), "HH:mm")}</div>
+                            <div className="text-muted-foreground">{flight.fromAirport}</div>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="text-sm text-muted-foreground">{calculateDuration(flight.departureTime, flight.arrivalTime)}</div>
+                            <div className="relative w-24 md:w-32">
+                              <Separator className="my-2" />
+                              <Plane className="h-4 w-4 absolute -right-2 top-0 -translate-y-1/2" />
+                            </div>
+                            <div className="text-sm text-muted-foreground">Direct</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-xl font-semibold">{format(new Date(flight.arrivalTime), "HH:mm")}</div>
+                            <div className="text-muted-foreground">{flight.toAirport}</div>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold">₹{flight.baseFare}</div>
+                          <Badge variant={flight.availableSeats > 30 ? "outline" : "secondary"}>{flight.availableSeats} seats left</Badge>
+                        </div>
                       </div>
+                    </CardContent>
+                    <CardFooter className="bg-muted/20 p-4 flex justify-end">
+                      <Button onClick={() => handleViewFlight(flight.flightId)}>View Details</Button>
+                    </CardFooter>
+                  </Card>
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
-                      <div className="flex flex-col items-center">
-                        <div className="text-sm text-muted-foreground">
-                          {calculateDuration(flight.departureTime, flight.arrivalTime)}
-                        </div>
-                        <div className="relative w-24 md:w-32">
-                          <Separator className="my-2" />
-                          <Plane className="h-4 w-4 absolute -right-2 top-0 -translate-y-1/2" />
-                        </div>
-                        <div className="text-sm text-muted-foreground">Direct</div>
-                      </div>
-
-                      <div className="text-center">
-                        <div className="text-xl font-semibold">
-                          {format(new Date(flight.arrivalTime), "HH:mm")}
-                        </div>
-                        <div className="text-muted-foreground">{flight.toAirport}</div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-2xl font-bold">₹{flight.baseFare}</div>
-                      <Badge variant={flight.availableSeats > 30 ? "outline" : "secondary"}>
-                        {flight.availableSeats} seats left
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="bg-muted/20 p-4 flex justify-end">
-                  <Button onClick={() => handleViewFlight(flight.flightId)}>
-                    View Details
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-
-        {flights.length > 0 && (
-          <div className="flex justify-between mt-6">
-            <Button
-              variant="outline"
-              disabled={currentPage === 0}
-              onClick={() => fetchFlights(currentPage - 1)}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              disabled={flights.length < pageSize}
-              onClick={() => fetchFlights(currentPage + 1)}
-            >
-              Next
-            </Button>
-          </div>
+            {/* Pagination */}
+            <div className="flex justify-between mt-6">
+              <Button onClick={handlePrevPage} disabled={isPrevDisabled}>
+                Previous
+              </Button>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-muted-foreground">Page {currentPage + 1}{isServerSearch ? "" : ` of ${Math.max(1, Math.ceil(flights.length / pageSize))}`}</span>
+                <Button onClick={handleNextPage} disabled={isNextDisabled}>
+                  Next
+                </Button>
+              </div>
+            </div>
+          </>
         )}
+
+        {!isLoading && flights.length === 0 && <div className="text-center py-4">No Flights Found</div>}
       </div>
     </div>
   );
