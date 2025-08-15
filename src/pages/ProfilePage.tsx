@@ -5,7 +5,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -14,11 +20,16 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Loader2, CheckCircle2, LogOut, EyeOff, Eye, Trash2 } from 'lucide-react';
+import { AlertCircle, Loader2, CheckCircle2, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AuthService } from '@/lib/api';
-import { Customer } from '@/types.ts';
 import {
   Dialog,
   DialogContent,
@@ -38,13 +49,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from "sonner";
-
+import { toast } from "@/components/ui/use-toast";
 // --- API Configuration ---
 // Make sure to fill in your API base URL here
-const PROFILE_API_URL = `/api/auth/customers/profile`;
-const PASSWORD_API_URL = `/api/auth/customers/change-password`;
-const DELETE_API_URL = `/api/auth/customers/profile`;
+const API_BASE_URL = 'http://localhost:8086/api/auth/customers';
+const PROFILE_API_URL = `${API_BASE_URL}/profile`;
+const PASSWORD_API_URL = `${API_BASE_URL}/change-password`;
+const DELETE_API_URL = `${API_BASE_URL}/profile`;
 
 // --- Profile Update Schema ---
 // The email field is removed from the schema as it's not editable.
@@ -78,10 +89,9 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 const ProfilePage = () => {
-   const navigate = useNavigate();
-   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-    const { customer:customerAuth, isAuthenticated } = useAppSelector((state) => state.auth);
+   const { customer:customerAuth, isAuthenticated } = useAppSelector((state) => state.auth);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
@@ -96,6 +106,7 @@ const ProfilePage = () => {
     current: false,
     new: false,
     confirm: false,
+    delete: false,
   });
 
   const profileForm = useForm<ProfileFormValues>({
@@ -118,45 +129,54 @@ const ProfilePage = () => {
       confirmPassword: '',
     },
   });
-  
 
-const fetchProfile = async () => {
-  setIsLoading(true);
-  setProfileError(null);
-  try {
-    if (!isAuthenticated) { // fixed your logic here
-      setShowLoginPrompt(true);
-      setIsLoading(false);
-      return;
-    }
+  // --- Fetch Profile Data on mount ---
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoading(true);
+      setProfileError(null);
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          setShowLoginPrompt(true);
+          setIsLoading(false);
+          return;
+        }
 
-    const response = await api.get(PROFILE_API_URL);
-    const fetchedCustomer = response.data;
-    setCustomer(fetchedCustomer);
+        const response = await axios.get(PROFILE_API_URL, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const fetchedCustomer = response.data;
+        setCustomer(fetchedCustomer);
+        // Reset the form with fetched data
+        profileForm.reset({
+          firstName: fetchedCustomer.firstName,
+          lastName: fetchedCustomer.lastName,
+          phoneNumber: fetchedCustomer.phoneNumber,
+          gender: fetchedCustomer.gender,
+          birthdate: fetchedCustomer.dateOfBirth,
+          address: fetchedCustomer.address || '',
+        });
+      } catch (err: any) {
+        setProfileError('Failed to fetch profile data. Please try again.');
+        console.error('API Error:', err);
+        if (err.response && err.response.status === 401) {
+          handleLogout();
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    profileForm.reset({
-      firstName: fetchedCustomer.firstName,
-      lastName: fetchedCustomer.lastName,
-      phoneNumber: fetchedCustomer.phoneNumber,
-      gender: fetchedCustomer.gender,
-      birthdate: fetchedCustomer.dateOfBirth,
-      address: fetchedCustomer.address || '',
-    });
-  } catch (err: any) {
-    setProfileError('Failed to fetch profile data. Please try again.');
-    console.error('API Error:', err);
-    if (err.response?.status === 401) {
-      handleLogout();
-    }
-  } finally {
-    setIsLoading(false);
-  }
-};
+    fetchProfile();
+  }, [navigate, profileForm]);
 
 // If you still want it to run on mount
 useEffect(() => {
   fetchProfile();
-}, []);
+}, [isAuthenticated]);
 
     // --- Handle Profile Update Submission ---
   const onProfileSubmit = async (data: ProfileFormValues) => {
@@ -165,20 +185,25 @@ useEffect(() => {
     setUpdateSuccess(false);
 
     try {
-      
-      if (!isAuthenticated) {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
         navigate('/login');
         return;
       }
-      const response = await api.put(
+      const response = await axios.put(
         PROFILE_API_URL,
         // Include the email from the customer state in the payload
-        { ...data, dateOfBirth: data.birthdate, email: customer?.email }
+        { ...data, dateOfBirth: data.birthdate, email: customer?.email },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const updatedCustomer = response.data;
       setCustomer(updatedCustomer);
       setUpdateSuccess(true);
-      setTimeout(() => setUpdateSuccess(false), 1500);
+      setTimeout(() => setUpdateSuccess(false), 3000);
     } catch (err: any) {
       setProfileError(err.response?.data?.message || 'Failed to update profile. Please try again.');
       console.error('API Error:', err);
@@ -195,25 +220,32 @@ useEffect(() => {
     setPasswordSuccess(false);
 
     try {
-      if (!isAuthenticated) {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
         navigate('/login');
         return;
       }
       // Only currentPassword and newPassword are sent to the API
-      await api.put(
+      await axios.put(
         PASSWORD_API_URL,
         {
           currentPassword: data.currentPassword,
           newPassword: data.newPassword,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       setPasswordSuccess(true);
       passwordForm.reset();
-      setTimeout(() => setPasswordSuccess(false), 1500);
-        toast.success("Password changed successfully!", {
-         duration: 1500, // 2 seconds
-       });
-       handleLogout();
+      setTimeout(() => {
+  setPasswordSuccess(false);
+
+  // After hiding success, logout & redirect
+  handleLogout();
+}, 3000);
     } catch (err: any) {
       console.error('Password change error:', err);
       console.error('Error response:', err.response);
@@ -222,9 +254,6 @@ useEffect(() => {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       });
-        toast.error("Failed to change password.", {
-         duration: 1500,
-       });
       console.error('Request headers:', {
         Authorization: `Bearer ${localStorage.getItem('authToken')}`,
       });
@@ -233,43 +262,39 @@ useEffect(() => {
       setIsPasswordLoading(false);
     }
   };
-  
-const handleLogout = () => {
-  // Clear tokens
-  localStorage.removeItem("token");
-  sessionStorage.removeItem("token");
 
-  // Reset Redux state
-  dispatch(logout());
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    navigate('/login');
+  };
 
- // Redirect
-  navigate("/login", { replace: true });
-};
-
-const handleDeleteProfile = async () => {
-  
+  const handleDeleteProfile = async () => {
     setIsDeleting(true);
     try {
-      if (!isAuthenticated) {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
         navigate('/login');
         return;
       }
 
-      await api.delete(DELETE_API_URL, {
+      await axios.delete(DELETE_API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         data: { password: deletePassword },
       });
-        toast.success("Profile deleted successfully!", {
-         duration: 1500, // 2 seconds
-       });
+      toast({
+  title: "Account Deleted",
+  description: "Your account has been deleted successfully.",
+  variant: "default"
+});
+      
+       setTimeout(() => {
       handleLogout();
+    }, 2000); 
     } catch (err: any) {
-      toast.error("Failed to delete profile. Please try again.", {
-         duration: 1500, // 2 seconds
-       });
-      console.error('Delete Profile Error:', err);
       setProfileError(err.response?.data?.message || 'Failed to delete profile. Please try again.');
       console.error('Delete Error:', err);
-
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
@@ -277,14 +302,14 @@ const handleDeleteProfile = async () => {
     }
   };
 
-  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
+  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm' | 'delete') => {
     setPasswordVisibility((prevState) => ({
       ...prevState,
       [field]: !prevState[field],
     }));
   };
 
-  if (!isAuthenticated) {
+  if (showLoginPrompt) {
     return (
       <div className="container py-8 flex justify-center items-center min-h-[400px]">
         <Card className="w-full max-w-md">
@@ -655,14 +680,25 @@ const handleDeleteProfile = async () => {
               This action cannot be undone. Please enter your password to confirm account deletion.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Input
-              type="password"
-              placeholder="Enter your password"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-            />
-          
+          <div className="py-4 relative">
+                                                             <Input
+    type={passwordVisibility.delete ? 'text' : 'password'}
+    placeholder="Enter your password"
+    value={deletePassword}
+    onChange={(e) => setDeletePassword(e.target.value)}
+    className="pr-10" // space for icon
+  />
+  <button
+    type="button"
+    onClick={() => togglePasswordVisibility('delete')}
+    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+  >
+    {passwordVisibility.delete ? (
+      <EyeOff className="h-4 w-4" aria-label="Hide password" />
+    ) : (
+      <Eye className="h-4 w-4" aria-label="Show password" />
+    )}
+  </button>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
