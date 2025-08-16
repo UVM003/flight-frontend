@@ -147,9 +147,9 @@ export default function UpdateFlightPage() {
         const arrivalIso = f.arrivalTime ?? '';
 
         const departureDate = departureIso ? departureIso.split("T")[0] : '';
-        const departureTime = departureIso ? departureIso.split("T")[1] : '';
+        const departureTime = departureIso ? departureIso.split("T")[1].slice(0, 5) : '';
         const arrivalDate = arrivalIso ? arrivalIso.split("T")[0] : '';
-        const arrivalTime = arrivalIso ? arrivalIso.split("T")[1] : '';
+        const arrivalTime = arrivalIso ? arrivalIso.split("T")[1].slice(0, 5) : '';
 
         // reset the form values with fetched data
         form.reset({

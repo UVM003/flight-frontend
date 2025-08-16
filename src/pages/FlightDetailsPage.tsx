@@ -86,7 +86,7 @@ const FlightDetailsPage = () => {
       .then(() => {
         toast.success("Flight deleted successfully!", { duration: 1500 });
         setOpen(false);
-        navigate("/"); // Redirect after deletion
+        navigate("/search"); // Redirect after deletion
       })
       .catch((error) => {
         console.error("Error deleting flight:", error);
