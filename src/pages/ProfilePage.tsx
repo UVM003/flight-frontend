@@ -5,13 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -20,16 +14,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Loader2, CheckCircle2, Trash2, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Loader2, CheckCircle2, LogOut, EyeOff, Eye, Trash2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AuthService } from '@/lib/api';
+import { Customer } from '@/types.ts';
 import {
   Dialog,
   DialogContent,
@@ -89,7 +78,8 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 const ProfilePage = () => {
-  const navigate = useNavigate();
+   const navigate = useNavigate();
+   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true);
    const { customer:customerAuth, isAuthenticated } = useAppSelector((state) => state.auth);
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -129,49 +119,40 @@ const ProfilePage = () => {
       confirmPassword: '',
     },
   });
+  
 
-  // --- Fetch Profile Data on mount ---
-  useEffect(() => {
-    const fetchProfile = async () => {
-      setIsLoading(true);
-      setProfileError(null);
-      try {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-          setShowLoginPrompt(true);
-          setIsLoading(false);
-          return;
-        }
+const fetchProfile = async () => {
+  setIsLoading(true);
+  setProfileError(null);
+  try {
+    if (!isAuthenticated) { // fixed your logic here
+      setShowLoginPrompt(true);
+      setIsLoading(false);
+      return;
+    }
 
-        const response = await axios.get(PROFILE_API_URL, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const fetchedCustomer = response.data;
-        setCustomer(fetchedCustomer);
-        // Reset the form with fetched data
-        profileForm.reset({
-          firstName: fetchedCustomer.firstName,
-          lastName: fetchedCustomer.lastName,
-          phoneNumber: fetchedCustomer.phoneNumber,
-          gender: fetchedCustomer.gender,
-          birthdate: fetchedCustomer.dateOfBirth,
-          address: fetchedCustomer.address || '',
-        });
-      } catch (err: any) {
-        setProfileError('Failed to fetch profile data. Please try again.');
-        console.error('API Error:', err);
-        if (err.response && err.response.status === 401) {
-          handleLogout();
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    const response = await api.get(PROFILE_API_URL);
+    const fetchedCustomer = response.data;
+    setCustomer(fetchedCustomer);
 
-    fetchProfile();
-  }, [navigate, profileForm]);
+    profileForm.reset({
+      firstName: fetchedCustomer.firstName,
+      lastName: fetchedCustomer.lastName,
+      phoneNumber: fetchedCustomer.phoneNumber,
+      gender: fetchedCustomer.gender,
+      birthdate: fetchedCustomer.dateOfBirth,
+      address: fetchedCustomer.address || '',
+    });
+  } catch (err: any) {
+    setProfileError('Failed to fetch profile data. Please try again.');
+    console.error('API Error:', err);
+    if (err.response?.status === 401) {
+      handleLogout();
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
 
 // If you still want it to run on mount
 useEffect(() => {
@@ -185,20 +166,15 @@ useEffect(() => {
     setUpdateSuccess(false);
 
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
+      
+      if (!isAuthenticated) {
         navigate('/login');
         return;
       }
-      const response = await axios.put(
+      const response = await api.put(
         PROFILE_API_URL,
         // Include the email from the customer state in the payload
-        { ...data, dateOfBirth: data.birthdate, email: customer?.email },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { ...data, dateOfBirth: data.birthdate, email: customer?.email }
       );
       const updatedCustomer = response.data;
       setCustomer(updatedCustomer);
@@ -220,22 +196,16 @@ useEffect(() => {
     setPasswordSuccess(false);
 
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
+      if (!isAuthenticated) {
         navigate('/login');
         return;
       }
       // Only currentPassword and newPassword are sent to the API
-      await axios.put(
+      await api.put(
         PASSWORD_API_URL,
         {
           currentPassword: data.currentPassword,
           newPassword: data.newPassword,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
       setPasswordSuccess(true);
@@ -262,25 +232,29 @@ useEffect(() => {
       setIsPasswordLoading(false);
     }
   };
+  
+const handleLogout = () => {
+  // Clear tokens
+  localStorage.removeItem("token");
+  sessionStorage.removeItem("token");
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    navigate('/login');
-  };
+  // Reset Redux state
+  dispatch(logout());
 
-  const handleDeleteProfile = async () => {
+ // Redirect
+  navigate("/login", { replace: true });
+};
+
+const handleDeleteProfile = async () => {
+  
     setIsDeleting(true);
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
+      if (!isAuthenticated) {
         navigate('/login');
         return;
       }
 
-      await axios.delete(DELETE_API_URL, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      await api.delete(DELETE_API_URL, {
         data: { password: deletePassword },
       });
       toast({
@@ -309,7 +283,7 @@ useEffect(() => {
     }));
   };
 
-  if (showLoginPrompt) {
+  if (!isAuthenticated) {
     return (
       <div className="container py-8 flex justify-center items-center min-h-[400px]">
         <Card className="w-full max-w-md">

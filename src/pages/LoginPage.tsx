@@ -21,10 +21,7 @@ import { useDispatch } from "react-redux";
 import { loginSuccess } from "../store/authSlice";
 import api from '@/lib/axiosApi';
 import ForgotPasswordComponent from '@/components/user/ForgetPasswordForm';
-<<<<<<< Updated upstream
-=======
 import PasswordInput from '@/components/user/PasswordInput';
->>>>>>> Stashed changes
 // Form validation schema
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
