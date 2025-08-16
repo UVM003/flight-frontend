@@ -38,13 +38,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from "sonner";
-
+import { toast } from "@/components/ui/use-toast";
 // --- API Configuration ---
 // Make sure to fill in your API base URL here
-const PROFILE_API_URL = `/api/auth/customers/profile`;
-const PASSWORD_API_URL = `/api/auth/customers/change-password`;
-const DELETE_API_URL = `/api/auth/customers/profile`;
+const API_BASE_URL = 'http://localhost:8086/api/auth/customers';
+const PROFILE_API_URL = `${API_BASE_URL}/profile`;
+const PASSWORD_API_URL = `${API_BASE_URL}/change-password`;
+const DELETE_API_URL = `${API_BASE_URL}/profile`;
 
 // --- Profile Update Schema ---
 // The email field is removed from the schema as it's not editable.
@@ -81,7 +81,7 @@ const ProfilePage = () => {
    const navigate = useNavigate();
    const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true);
-    const { customer:customerAuth, isAuthenticated } = useAppSelector((state) => state.auth);
+   const { customer:customerAuth, isAuthenticated } = useAppSelector((state) => state.auth);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
@@ -96,6 +96,7 @@ const ProfilePage = () => {
     current: false,
     new: false,
     confirm: false,
+    delete: false,
   });
 
   const profileForm = useForm<ProfileFormValues>({
@@ -178,7 +179,7 @@ useEffect(() => {
       const updatedCustomer = response.data;
       setCustomer(updatedCustomer);
       setUpdateSuccess(true);
-      setTimeout(() => setUpdateSuccess(false), 1500);
+      setTimeout(() => setUpdateSuccess(false), 3000);
     } catch (err: any) {
       setProfileError(err.response?.data?.message || 'Failed to update profile. Please try again.');
       console.error('API Error:', err);
@@ -209,11 +210,12 @@ useEffect(() => {
       );
       setPasswordSuccess(true);
       passwordForm.reset();
-      setTimeout(() => setPasswordSuccess(false), 1500);
-        toast.success("Password changed successfully!", {
-         duration: 1500, // 2 seconds
-       });
-       handleLogout();
+      setTimeout(() => {
+  setPasswordSuccess(false);
+
+  // After hiding success, logout & redirect
+  handleLogout();
+}, 3000);
     } catch (err: any) {
       console.error('Password change error:', err);
       console.error('Error response:', err.response);
@@ -222,9 +224,6 @@ useEffect(() => {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       });
-        toast.error("Failed to change password.", {
-         duration: 1500,
-       });
       console.error('Request headers:', {
         Authorization: `Bearer ${localStorage.getItem('authToken')}`,
       });
@@ -258,18 +257,18 @@ const handleDeleteProfile = async () => {
       await api.delete(DELETE_API_URL, {
         data: { password: deletePassword },
       });
-        toast.success("Profile deleted successfully!", {
-         duration: 1500, // 2 seconds
-       });
+      toast({
+  title: "Account Deleted",
+  description: "Your account has been deleted successfully.",
+  variant: "default"
+});
+      
+       setTimeout(() => {
       handleLogout();
+    }, 2000); 
     } catch (err: any) {
-      toast.error("Failed to delete profile. Please try again.", {
-         duration: 1500, // 2 seconds
-       });
-      console.error('Delete Profile Error:', err);
       setProfileError(err.response?.data?.message || 'Failed to delete profile. Please try again.');
       console.error('Delete Error:', err);
-
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
@@ -277,7 +276,7 @@ const handleDeleteProfile = async () => {
     }
   };
 
-  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
+  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm' | 'delete') => {
     setPasswordVisibility((prevState) => ({
       ...prevState,
       [field]: !prevState[field],
@@ -655,14 +654,25 @@ const handleDeleteProfile = async () => {
               This action cannot be undone. Please enter your password to confirm account deletion.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Input
-              type="password"
-              placeholder="Enter your password"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-            />
-          
+          <div className="py-4 relative">
+                                                             <Input
+    type={passwordVisibility.delete ? 'text' : 'password'}
+    placeholder="Enter your password"
+    value={deletePassword}
+    onChange={(e) => setDeletePassword(e.target.value)}
+    className="pr-10" // space for icon
+  />
+  <button
+    type="button"
+    onClick={() => togglePasswordVisibility('delete')}
+    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+  >
+    {passwordVisibility.delete ? (
+      <EyeOff className="h-4 w-4" aria-label="Hide password" />
+    ) : (
+      <Eye className="h-4 w-4" aria-label="Show password" />
+    )}
+  </button>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>

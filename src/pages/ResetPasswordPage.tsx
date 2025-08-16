@@ -27,7 +27,7 @@ const [show, setShow] = useState(false);
     setLoading(true);
 
     try {
-      const res = await api.post("/auth/customers/resetpassword", {
+      const res = await api.post("api/auth/customers/resetpassword", {
         email,
         otp,
         newPassword,
