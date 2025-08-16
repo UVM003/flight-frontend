@@ -38,13 +38,12 @@ const FlightDetailsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [flight, setFlight] = useState<Flight | null>(null);
 
-  // Admin-related state
+
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { customer } = useAppSelector((state) => state.auth);
 
-  // Fetch flight details
   useEffect(() => {
     if (!flightId) return;
 
@@ -72,12 +71,12 @@ const FlightDetailsPage = () => {
     fetchFlightDetails();
   }, [flightId]);
 
-  // Booking navigation (anyone can click)
+ 
   const handleBookNow = () => {
     navigate(`/booking/${flightId}`);
   };
 
-  // Admin actions
+
   const handleUpdateFlight = () => navigate(`/update/${flightId}`);
   const handleConfirmDelete = () => {
     setLoading(true);
@@ -95,7 +94,6 @@ const FlightDetailsPage = () => {
       .finally(() => setLoading(false));
   };
 
-  // Calculate duration
   const calculateDuration = () => {
     if (!flight) return "";
     const dep = new Date(flight.departureTime);
@@ -148,7 +146,6 @@ const FlightDetailsPage = () => {
 
           {/* Flight journey */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12 items-start justify-items-center">
-            {/* Departure */}
             <div className="space-y-1 text-left w-full max-w-xs">
               <p className="text-muted-foreground text-sm">Departure</p>
               <p className="text-2xl font-semibold">{format(new Date(flight.departureTime), "HH:mm")}</p>

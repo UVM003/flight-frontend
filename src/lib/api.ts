@@ -14,11 +14,11 @@ export async function get<T>(endpoint: string, headers = {}): Promise<T | String
     if (contentType && contentType.includes('application/json')) {
       return response.json();
     } else {
-      // fallback: treat response as plain text
+     
       return response.text();
     }
   } else {
-    // error responses can also be JSON or text
+    
     if (contentType && contentType.includes('application/json')) {
       const errorJson = await response.json();
       return errorJson;
@@ -43,11 +43,9 @@ export async function post<T, U>(endpoint: string, data: T, headers = {}): Promi
     if (contentType && contentType.includes('application/json')) {
       return response.json();
     } else {
-      // fallback: treat response as plain text
       return response.text();
     }
   } else {
-    // error responses can also be JSON or text
     if (contentType && contentType.includes('application/json')) {
       const errorJson = await response.json();
       return errorJson;
@@ -56,21 +54,21 @@ export async function post<T, U>(endpoint: string, data: T, headers = {}): Promi
     }
   }
 }
-// Ticket cancellation API service
+
 export const TicketCancellationService = {
-  // Get ticket details for cancellation
+
   getTicketDetails: (bookingId: string, token: string) => 
     get(`/api/tickets/${bookingId}`, {
       Authorization: token ? `Bearer ${token}` : ''
     }),
 
-  // Request OTP for cancellation 
+
   requestOtp: (token: string) =>
     get(`/api/ticketCancel/otp/request`, 
       { Authorization: token ? `Bearer ${token}` : '' }
     ),
 
-  // Verify OTP and process cancellation (POST request with params)
+
   verifyOtp: (bookingId: string, otp: string, cancellationDate: string, token: string) =>
     post(
       `/api/ticketCancel/otp/${bookingId}/verify?cancellationDate=${cancellationDate}`,
@@ -86,6 +84,5 @@ export const AuthService = {
   register: (data: { firstName: string; lastName: string; email: string; password: string; phoneNumber: string }) =>
     post<typeof data, { userId: string }>('/auth/register', data),
 
-  // Add more auth-related methods here
 };
 

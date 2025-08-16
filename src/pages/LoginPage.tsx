@@ -22,7 +22,6 @@ import { loginSuccess } from "../store/authSlice";
 import api from '@/lib/axiosApi';
 import ForgotPasswordComponent from '@/components/user/ForgetPasswordForm';
 import PasswordInput from '@/components/user/PasswordInput';
-// Form validation schema
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
@@ -38,7 +37,6 @@ const LoginPage = () => {
    const [isLoggedIn, setIsLoggedIn] = useState(false);
    const [forgotEmail, setForgotEmail] = useState("");
   const dispatch = useDispatch();
-  // Get redirect path from location state, default to home
   const from = location.state?.redirectTo || '/';
   
   const form = useForm<LoginFormValues>({
@@ -54,25 +52,20 @@ const onSubmit = async (data: LoginFormValues) => {
   setError(null);
 
   try {
-    // Call backend
     const response = await api.post("/api/auth/customers/login", {
       email: data.email,
       password: data.password,
     });
 
-    // Assuming backend returns { token, customer: { username, role, email, ... } }
     console.log("Login response:", response.data);
     const   customer  = response.data;
     
 
-    // Save in Redux
     dispatch(loginSuccess({ token: customer.token, customer }));
 
-    // Persist in localStorage
     localStorage.setItem("token", customer.token);
     localStorage.setItem("customer", JSON.stringify(customer));
 
-    // Redirect user
     navigate(from);
   } catch (err) {
     console.error("Login error:", err);

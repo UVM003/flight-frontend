@@ -38,12 +38,12 @@ interface UserResponseDTO {
   firstName: string;
   lastName: string;
   gender: string;
-  dateOfBirth: string; // ISO date string (e.g., "2025-08-14")
+  dateOfBirth: string; 
   email: string;
   phoneNumber: string;
   address: string;
-  createdAt: string; // ISO date-time string
-  updatedAt: string; // ISO date-time string
+  createdAt: string; 
+  updatedAt: string;
   role: string;
   emailVerified: boolean;
 }
@@ -51,7 +51,7 @@ interface UserResponseDTO {
 const AddAdmin = () => {
       const navigate = useNavigate();
     
-      // Declare state for bookings and selected booking
+    
       const [isLoading, setIsLoading] = useState(true);
  const [users, setUsers] = useState<UserResponseDTO[]>([]);
    const [open, setOpen] = useState(false);
@@ -77,7 +77,7 @@ const AddAdmin = () => {
     } catch (error) {
       console.error("Error fetching users:", error);
        toast.error("Error fetching users!", {
-               duration: 1500, // 2 seconds
+               duration: 1500,
              });
     } finally {
       setIsLoading(false);
@@ -99,12 +99,12 @@ const AddAdmin = () => {
   }
 
      const handleAddAdmin = async(user: UserResponseDTO) => {
-       // Logic to add a new admin user
+       
        try {
          const response = await api.put("/api/admin/users/role", {
-           // Include user details here
+           
            userId: user.userId,
-           email: user.email, // Assuming you have the user's email
+           email: user.email, 
               role: 'ADMIN',
          });
          const newUser = response.data;

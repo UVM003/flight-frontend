@@ -32,7 +32,6 @@ enum VerificationStatus {
   FAILED,
 }
 
-// Type guard to check if an object is BackendError
 function isBackendError(obj: any): obj is BackendError {
   return (
     obj &&
@@ -64,17 +63,16 @@ const TicketCancellationPage = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
 
-  // Get the current date for OTP verification
-  const currentDate = new Date().toISOString().split("T")[0]; // format: YYYY-MM-DD
+  const currentDate = new Date().toISOString().split("T")[0]; 
  const customerData = JSON.parse(localStorage.getItem("customer") || "{}");
 const tokenFromCustomer = customerData.token;
 const token = tokenFromCustomer;
   useEffect(() => {
     const fetchTicketDetails = async () => {
       setIsLoading(true);
-      // Use the security token if available from local storage
+      
       try {
-        // const token = tokenFromCustomer|| "";
+       
         const data = await TicketCancellationService.getTicketDetails(
           bookingId!,
           token
@@ -85,7 +83,7 @@ const token = tokenFromCustomer;
           setErrorMessage("Failed to load ticket details. Please try again.");
           toast.error(data?.error ?? data?.message ?? data?.error);
         } else {
-          // This is a valid JSON object of type YourDataType
+          
           response = data as BookingTicketDetails;
           console.log("Valid data:", response);
           setTicketDetails(response);
@@ -111,8 +109,7 @@ const token = tokenFromCustomer;
     setSuccessMessage("");
 
     try {
-      // Use the security token if available from local storage
-      // const token = tokenFromCustomer|| "";
+      
       const response = await TicketCancellationService.requestOtp(token);
       console.log(response);
       if (isBackendError(response)) {
@@ -146,8 +143,7 @@ const token = tokenFromCustomer;
     setErrorMessage("");
     setSuccessMessage("");
 
-    // Use the security token if available from local storage
-    // const token = tokenFromCustomer|| "";
+   
     const data = await TicketCancellationService.verifyOtp(
       bookingId!,
       otp,
@@ -162,7 +158,7 @@ const token = tokenFromCustomer;
       );
       toast.error(typeof data === "string" ? data : data.message);
     } else {
-      // This is a valid JSON object of type YourDataType
+     
       response = data as CancellationTicketDetails;
       console.log("Valid data:", response);
       setSuccessMessage(response.message);

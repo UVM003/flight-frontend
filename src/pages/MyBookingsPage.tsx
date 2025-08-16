@@ -28,7 +28,6 @@ import { TicketDetails } from '@/types';
 const MyBookingsPage = () => {
   const navigate = useNavigate();
 
-  // Declare state for bookings and selected booking
   const [isLoading, setIsLoading] = useState(true);
   const [bookings, setBookings] = useState<TicketDetails[]>([]);
   const [selectedBooking, setSelectedBooking] = useState(null); 
@@ -43,11 +42,11 @@ const MyBookingsPage = () => {
         Authorization: `Bearer ${token}`,
       },
     })
-      .then((res) => res.json()) // Convert Response → JSON
+      .then((res) => res.json())
       .then((data) => {
         setIsLoading(false);
         console.log("Fetched data:", data);
-        // Make sure it's an array before mapping
+
         if (Array.isArray(data)) {
           console.log("Array")
           setBookings(data);

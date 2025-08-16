@@ -17,11 +17,10 @@ import {
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CustomerRequest } from '@/types';
-import takeoffImage from '/takeoff.jpeg'; // Background image import
+import takeoffImage from '/takeoff.jpeg';
 import PasswordInput from '@/components/user/PasswordInput';
 import api from '@/lib/axiosApi';
 
-// Validation schema
 const registerSchema = z.object({
   firstName: z
     .string()
@@ -39,7 +38,7 @@ const registerSchema = z.object({
 
   dateOfBirth: z
     .string()
-    .min(1, { message: 'Date of birth is required' }), // could add .refine() for date format if needed
+    .min(1, { message: 'Date of birth is required' }),
 
   email: z
     .string()
@@ -103,7 +102,7 @@ const RegisterPage = () => {
     setError(null);
 
     try {
-      // Call register API
+ 
       const response = await api.post(
         '/api/auth/customers/register',
         {
@@ -118,7 +117,7 @@ const RegisterPage = () => {
         }
       );
 
-      // On success navigate to email verification page passing email in state
+      
       navigate('/verify-email', { state: { email: data.email } });
 
     } catch (err: any) {

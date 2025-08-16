@@ -14,7 +14,6 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Checkbox } from "@/components/ui/checkbox";
 
-// Airport list
 const airports = [
   { code: "BLR", name: "Bengaluru: Kempegowda International Airport" },
   { code: "DEL", name: "Delhi: Indira Gandhi International Airport" },
@@ -62,10 +61,8 @@ const SearchPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // NEW: server-search mode flag
   const [isServerSearch, setIsServerSearch] = useState(false);
 
-  // initial load - fetch all flights (client-side pagination)
   useEffect(() => {
     fetchAllFlights();
   }, []);
@@ -78,7 +75,7 @@ const SearchPage: React.FC = () => {
       const data = await response.json();
       setFlights(data);
       setCurrentPage(0);
-      setIsServerSearch(false); // ensure client-mode
+      setIsServerSearch(false);
     } catch (error: any) {
       console.error(error);
       alert(error.message || "Error fetching flights");
@@ -88,7 +85,6 @@ const SearchPage: React.FC = () => {
     }
   };
 
-  // Fetch a server-side page with filters applied
   const fetchFilteredFlights = async (page = 0) => {
     setIsLoading(true);
     try {
@@ -100,7 +96,6 @@ const SearchPage: React.FC = () => {
         size: String(pageSize),
       });
 
-      // append airlines as multiple params if some are selected (and not all)
       if (selectedAirlines.length > 0 && selectedAirlines.length < airlines.length) {
         selectedAirlines.forEach((a) => params.append("airlineName", a));
       }
@@ -112,12 +107,11 @@ const SearchPage: React.FC = () => {
       const url = `http://localhost:8086/api/filter/flights/search/advanced?${params.toString()}`;
       const response = await fetch(url);
       if (!response.ok) {
-        // backend returns 4xx/5xx -> treat as no results for this page
+       
         throw new Error("No flights found");
       }
       const data = await response.json();
 
-      // backend returns the single page (size = pageSize)
       setFlights(data);
       setCurrentPage(page);
       setIsServerSearch(true);
@@ -131,7 +125,6 @@ const SearchPage: React.FC = () => {
     }
   };
 
-  // Handle search button -> fetch page 0 from server (server-side pagination mode)
   const handleSearch = async () => {
     if (!searchParams.fromAirport || !searchParams.toAirport) {
       alert("Please select both From and To airports");
@@ -141,17 +134,13 @@ const SearchPage: React.FC = () => {
       alert("Departure and destination cannot be the same");
       return;
     }
-    // call server-side search page 0
+
     await fetchFilteredFlights(0);
   };
 
-  // Pagination handlers:
-  // - if server-mode: trigger API call for next/prev page
-  // - else: client-side local pagination (slice)
   const handleNextPage = () => {
     if (isServerSearch) {
-      // server returns pageSize items. If the current returned page has fewer than pageSize,
-      // we assume it's the last page (you accepted this risk).
+      
       if (flights.length < pageSize) return;
       fetchFilteredFlights(currentPage + 1);
     } else {
@@ -197,14 +186,8 @@ const SearchPage: React.FC = () => {
     return `${diffHrs}h ${diffMins}m`;
   };
 
-  // Pagination display:
-  // - if server-mode, flights already hold the current page
-  // - else slice the full flights list for client pagination
   const paginatedFlights = isServerSearch ? flights : flights.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
 
-  // Next button disabled logic:
-  // - server-mode: disable when returned page length < pageSize (assume last)
-  // - client-mode: disable when next would exceed local results
   const isNextDisabled = isServerSearch ? flights.length < pageSize : (currentPage + 1) * pageSize >= flights.length;
   const isPrevDisabled = currentPage === 0;
 

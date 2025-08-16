@@ -12,14 +12,12 @@ const NavBar = () => {
   const { customer, isAuthenticated } = useAppSelector((state) => state.auth);
 const dispatch = useDispatch();
   const handleLogout = () => {
-  // Clear tokens
+  
   localStorage.removeItem("token");
   sessionStorage.removeItem("token");
 
-  // Reset Redux state
   dispatch(logout());
 
- // Redirect
   navigate("/login", { replace: true });
 };
   return (

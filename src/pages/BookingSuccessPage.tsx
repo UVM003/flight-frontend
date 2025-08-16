@@ -15,14 +15,14 @@ const BookingSuccessPage = () => {
   const state = location.state as BookingSuccessState;
   
   useEffect(() => {
-    // If someone tries to access this page directly without booking info, redirect to home
+
     if (!state?.bookingId) {
       navigate('/');
     }
   }, [state, navigate]);
   
   if (!state?.bookingId) {
-    return null; // Don't render anything while redirecting
+    return null;
   }
 
   return (

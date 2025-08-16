@@ -39,15 +39,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from "@/components/ui/use-toast";
-// --- API Configuration ---
-// Make sure to fill in your API base URL here
+
 const API_BASE_URL = 'http://localhost:8086/api/auth/customers';
 const PROFILE_API_URL = `${API_BASE_URL}/profile`;
 const PASSWORD_API_URL = `${API_BASE_URL}/change-password`;
 const DELETE_API_URL = `${API_BASE_URL}/profile`;
 
-// --- Profile Update Schema ---
-// The email field is removed from the schema as it's not editable.
+
 const profileSchema = z.object({
   firstName: z.string().min(1, { message: 'First name is required' }),
   lastName: z.string().min(1, { message: 'Last name is required' }),
@@ -61,8 +59,6 @@ const profileSchema = z.object({
   address: z.string().optional(),
 });
 
-// Password change schema
-// The field name for the old password is now consistent as 'currentPassword'.
 const passwordSchema = z
   .object({
     currentPassword: z.string().min(6, { message: 'Current password is required' }),
@@ -125,7 +121,7 @@ const fetchProfile = async () => {
   setIsLoading(true);
   setProfileError(null);
   try {
-    if (!isAuthenticated) { // fixed your logic here
+    if (!isAuthenticated) { 
       setShowLoginPrompt(true);
       setIsLoading(false);
       return;
@@ -154,12 +150,11 @@ const fetchProfile = async () => {
   }
 };
 
-// If you still want it to run on mount
+
 useEffect(() => {
   fetchProfile();
 }, [isAuthenticated]);
 
-    // --- Handle Profile Update Submission ---
   const onProfileSubmit = async (data: ProfileFormValues) => {
     setIsLoading(true);
     setProfileError(null);
@@ -173,7 +168,7 @@ useEffect(() => {
       }
       const response = await api.put(
         PROFILE_API_URL,
-        // Include the email from the customer state in the payload
+
         { ...data, dateOfBirth: data.birthdate, email: customer?.email }
       );
       const updatedCustomer = response.data;
@@ -188,7 +183,6 @@ useEffect(() => {
     }
   };
 
-  // --- Handle Password Change Submission ---
   const onPasswordSubmit = async (data: PasswordFormValues) => {
     console.log('Password submit called with data:', data);
     setIsPasswordLoading(true);
@@ -200,7 +194,7 @@ useEffect(() => {
         navigate('/login');
         return;
       }
-      // Only currentPassword and newPassword are sent to the API
+    
       await api.put(
         PASSWORD_API_URL,
         {
@@ -213,7 +207,7 @@ useEffect(() => {
       setTimeout(() => {
   setPasswordSuccess(false);
 
-  // After hiding success, logout & redirect
+
   handleLogout();
 }, 3000);
     } catch (err: any) {
@@ -234,14 +228,12 @@ useEffect(() => {
   };
   
 const handleLogout = () => {
-  // Clear tokens
+ 
   localStorage.removeItem("token");
   sessionStorage.removeItem("token");
 
-  // Reset Redux state
   dispatch(logout());
 
- // Redirect
   navigate("/login", { replace: true });
 };
 
@@ -350,7 +342,7 @@ const handleDeleteProfile = async () => {
                 <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
                   {/* --- Non-Editable Email Field --- */}
                   <FormField
-                    name="email" // Not part of the form, so no need for `control`
+                    name="email"
                     render={() => (
                       <FormItem>
                         <FormLabel>Email</FormLabel>
@@ -660,7 +652,7 @@ const handleDeleteProfile = async () => {
     placeholder="Enter your password"
     value={deletePassword}
     onChange={(e) => setDeletePassword(e.target.value)}
-    className="pr-10" // space for icon
+    className="pr-10"
   />
   <button
     type="button"

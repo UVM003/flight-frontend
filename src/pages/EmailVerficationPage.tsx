@@ -33,7 +33,7 @@ const EmailVerificationPage = () => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Pre-fill email from location.state if available
+
   const defaultEmail = (location.state as any)?.email || '';
 
   const form = useForm<VerificationFormValues>({

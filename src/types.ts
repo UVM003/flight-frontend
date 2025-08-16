@@ -1,6 +1,3 @@
-// src/types.ts
-
-// Passenger info for booking form
 export interface PassengerInfo {
   firstName: string;
   lastName: string;
@@ -10,7 +7,7 @@ export interface PassengerInfo {
   mealPreference?: string;
 }
 
-// Customer registration request
+
 export interface CustomerRequest {
   firstName: string;
   lastName: string;
@@ -19,32 +16,29 @@ export interface CustomerRequest {
   phoneNumber: string;
 }
 
-// Flight info object
 export interface Flight {
   flightId: number;
   flightNumber: string;
   airlineName: string;
   fromAirport: string;
   toAirport: string;
-  departureTime: string; // ISO string date-time
-  arrivalTime: string;   // ISO string date-time
+  departureTime: string; 
+  arrivalTime: string;  
   totalSeats: number;
   availableSeats: number;
   baseFare: number;
 }
 
-// Booking info
 export interface Booking {
   bookingId: number;
   flightId: number;
   customerId: number;
   passengers: PassengerInfo[];
   totalFare: number;
-  bookingDate: string; // ISO date string
+  bookingDate: string; 
   status: 'confirmed' | 'cancelled' | 'pending';
 }
 
-// User profile
 export interface UserProfile {
   id: number;
   firstName: string;
@@ -60,10 +54,10 @@ export interface Ticket {
   flightNumber: string;
   fromAirport: string;
   toAirport: string;
-  departureTime: string;  // ISO string date
-  arrivalTime: string;    // ISO string date
+  departureTime: string;  
+  arrivalTime: string;    
   bookingStatus: string;
-  bookingDate: string;    // ISO string date
+  bookingDate: string;   
   totalPassengers: number;
   totalFare: number;
   passengers: PassengerInfo[];
@@ -79,7 +73,6 @@ export interface Customer {
   verified: boolean;
 }
 
-//My Booking Details
 export interface TicketDetails {
   ticketId: number;
   bookingId: string;
@@ -105,7 +98,6 @@ interface PassengerInfoDTO {
   seatNumber: string;
 }
 
-//Booking Details
 export interface BookingTicketDetails {
   ticketId: number;
   bookingId: string;
@@ -118,7 +110,6 @@ export interface BookingTicketDetails {
   totalFare: number;
 }
 
-//Cancellation Details
 export interface CancellationTicketDetails {
   bookingId: string;
   journeyDate: string;
@@ -129,7 +120,6 @@ export interface CancellationTicketDetails {
   message: string;
 }
 
-//Handle Exceptions
 export interface BackendError {
   timestamp: string;
   message: string;

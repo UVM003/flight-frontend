@@ -37,7 +37,7 @@ import { useAppSelector } from '../store/store';
 import api from '@/lib/axiosApi';
 import { toast } from 'sonner';
 
-// Passenger form schema
+
 const passengerSchema = z.object({
   firstName: z.string().min(1, { message: 'First name is required' }),
   lastName: z.string().min(1, { message: 'Last name is required' }),
@@ -45,7 +45,7 @@ const passengerSchema = z.object({
   gender: z.string().min(1, { message: 'Gender is required' }),
 });
 
-// Payment form schema
+
 const paymentSchema = z.object({
   cardNumber: z.string().regex(/^\d{16}$/, { message: 'Card number must be 16 digits' }),
   cardholderName: z.string().min(1, { message: 'Cardholder name is required' }),
@@ -89,7 +89,7 @@ const BookingPage = () => {
     },
   });
 
-  // Fetch flight details from API when the page loads
+  
   useEffect(() => {
     const fetchFlightDetails = async () => {
       try {

@@ -25,15 +25,13 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Main Content with suitcase background */}
       <div
         className="bg-cover bg-center"
         style={{
-          backgroundImage: "url('/images/suitcase-bg.jpg')", // put your suitcase image in public/images
+          backgroundImage: "url('/images/suitcase-bg.jpg')",
         }}
       >
         <div className="bg-white/70">
-          {/* Features Section */}
           <div className="max-w-5xl mx-auto px-4 py-12 grid md:grid-cols-3 gap-6 text-center">
             <div className="p-6 bg-white rounded-xl shadow hover:shadow-lg transition">
               <MapPin className="mx-auto text-blue-600 mb-4" size={36} />
@@ -52,7 +50,7 @@ const HomePage = () => {
             </div>
           </div>
 
-          {/* Call to Action */}
+          
           <div className="max-w-3xl mx-auto px-4 pb-12">
             <Card className="shadow-xl">
               <CardHeader className="text-center">

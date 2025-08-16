@@ -1,4 +1,3 @@
-// UpdateFlightPage.tsx
 import React, { useEffect, useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -39,7 +38,6 @@ const airports = [
   { code: "BBI", name: "Bhubaneswar: Biju Patnaik International Airport" },
 ]
 
-// Validation schema
 export const flightSchema = z
   .object({
     flightNumber: z
@@ -101,15 +99,15 @@ export const flightSchema = z
       .min(0, { message: "Base fare cannot be negative" })
       .multipleOf(0.01, { message: "Base fare must have at most 2 decimal places" }),
   })
-  // Validation: From and To airports must not be the same
+
  .refine(
   (data) => data.fromAirport !== data.toAirport,
   {
     message: "From and To airports cannot be the same",
-    path: ["toAirport"], // show the error on the 'toAirport' field
+    path: ["toAirport"], 
   }
 )
-  // Validation 1: Arrival datetime must be after departure datetime
+  
   .refine(
     (data) => {
       const dep = new Date(`${data.departureDate}T${data.departureTime}`);
@@ -118,10 +116,10 @@ export const flightSchema = z
     },
     {
       message: "Arrival date/time must be after departure date/time",
-      path: ["arrivalDate"], // attach error to arrival date field
+      path: ["arrivalDate"], 
     }
   )
-  // Validation 2: Available seats must not exceed total seats
+  
   .refine(
     (data) => data.availableSeats <= data.totalSeats,
     {
@@ -161,7 +159,7 @@ export default function AddFlightPage() {
   const onSubmit = (data: FlightFormValues) => {
     setIsLoading(true);
   
-    // Combine date & time into ISO format
+   
     const payload = {
       flightNumber: data.flightNumber,
       airlineName: data.airlineName,
@@ -179,7 +177,7 @@ export default function AddFlightPage() {
    api.post(`/api/flights`, payload)
      .then((response) => {
        toast.success("Flight updated successfully!", {
-         duration: 1500, // 2 seconds
+         duration: 1500, 
        });
         console.log("uploaded flight details:", response.data);
        form.reset()

@@ -1,6 +1,6 @@
 class AuthService {
   static isAuthenticated(): boolean {
-    // For example, check if auth token exists in localStorage
+
     return !!localStorage.getItem('authToken');
   }
 
