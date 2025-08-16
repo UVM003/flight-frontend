@@ -156,7 +156,7 @@ const fetchProfile = async () => {
 // If you still want it to run on mount
 useEffect(() => {
   fetchProfile();
-}, []);
+}, [isAuthenticated]);
 
     // --- Handle Profile Update Submission ---
   const onProfileSubmit = async (data: ProfileFormValues) => {
