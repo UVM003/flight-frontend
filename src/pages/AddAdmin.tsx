@@ -32,6 +32,7 @@ import { format } from 'date-fns';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '@/lib/axiosApi';
 import { toast } from 'sonner';
+import { s } from 'node_modules/framer-motion/dist/types.d-Cjd591yU';
 
 interface UserResponseDTO {
   userId: number | null;
@@ -51,7 +52,7 @@ interface UserResponseDTO {
 const AddAdmin = () => {
       const navigate = useNavigate();
     
-    
+    const [selectedUser, setSelectedUser] = useState<UserResponseDTO>(null);
       const [isLoading, setIsLoading] = useState(true);
  const [users, setUsers] = useState<UserResponseDTO[]>([]);
    const [open, setOpen] = useState(false);
@@ -121,8 +122,14 @@ const AddAdmin = () => {
        }
      }
 
-        
-    
+
+    const handleDeleteClick = (user: UserResponseDTO) => {
+  setSelectedUser(user);
+  if (selectedUser) {
+    console.log(selectedUser);
+    setOpen(true);
+  }
+};
 
 
     function handleConfirmDelete(user: UserResponseDTO) {
@@ -149,6 +156,7 @@ const AddAdmin = () => {
                 });
             } finally {
                 setLoading(false);
+                setSelectedUser(null);
             }
         };
     }
@@ -194,26 +202,6 @@ const AddAdmin = () => {
                   <TableBody>
   {users.map((user) => (
     <>
-    {/* Delete User Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete User <b>{user.userId}</b>? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
-              No
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete(user)} disabled={loading}>
-              {loading ? "Deleting..." : "Confirm"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
     <TableRow key={user.userId}>
       <TableCell className="font-medium">{user.userId}</TableCell>
       <TableCell className="hidden sm:table-cell">{user.firstName} {user.lastName}</TableCell>
@@ -230,7 +218,7 @@ const AddAdmin = () => {
         <Button size="lg" onClick={() => handleAddAdmin(user)} >
                Make Admin
               </Button>
-              <Button size="lg" className="mt-2 md:mt-0 bg-red-700 hover:bg-red-600" onClick={() => setOpen(true)}>
+              <Button size="lg" className="mt-2 md:mt-0 bg-red-700 hover:bg-red-600" onClick={() => handleDeleteClick(user)}>
                 Delete User
               </Button>
       </TableCell>
@@ -241,6 +229,28 @@ const AddAdmin = () => {
 </Table>
 </CardContent>
 </Card>
+ {/* Delete User Dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm deletion</DialogTitle>
+            {selectedUser && (
+              <DialogDescription>
+                Are you sure you want to delete User <b>{selectedUser?.userId}</b> This action cannot be undone.
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          <DialogFooter className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+              No
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete(selectedUser)} disabled={loading}>
+              {loading ? "Deleting..." : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 </div>
 )}
 

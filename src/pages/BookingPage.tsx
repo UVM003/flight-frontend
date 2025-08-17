@@ -60,6 +60,7 @@ type PaymentFormValues = z.infer<typeof paymentSchema>;
 const BookingPage = () => {
   const { flightId } = useParams<{ flightId: string }>();
   const navigate = useNavigate();
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [passengers, setPassengers] = useState<PassengerInfo[]>([]);
@@ -93,8 +94,16 @@ const BookingPage = () => {
   useEffect(() => {
     const fetchFlightDetails = async () => {
       try {
+        if(customer)
+        {
         const response = await api.get(`/api/flights/${flightId}`);
         setFlight(response.data);
+        }
+        else
+        {
+          toast.error("Please login to book a flight.");
+          navigate('/login');
+        }
       } catch (error) {
         console.error("Error fetching flight details:", error);
         toast.error("Failed to load flight details.");
